@@ -1,0 +1,1015 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Operacional DHL</title>
+    <style>
+        :root {
+            --dhl-red: #D40511;
+            --bg-primary: #0D0D0D;
+            --bg-card: #161616;
+            --bg-surface: #1E1E1E;
+            --border: #2A2A2A;
+            --text-primary: #F0F0F0;
+            --text-muted: #8A8A8A;
+            --status-patio: #F59E0B;
+            --status-doca: #3B82F6;
+            --status-separado: #10B981;
+            --status-separando: #8B5CF6;
+            --status-liberado: #6B7280;
+            --radius-card: 10px;
+            --radius-small: 6px;
+            --shadow: 0 2px 12px rgba(0,0,0,0.4);
+            font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+        }
+
+        * { box-sizing: border-box; }
+        html, body { margin: 0; min-height: 100%; background: var(--bg-primary); color: var(--text-primary); }
+        body { overflow-x: hidden; }
+
+        .page {
+            width: min(100%, 1720px);
+            margin: 0 auto;
+            padding: 18px;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 18px;
+        }
+
+        header {
+            display: grid;
+            gap: 18px;
+        }
+
+        .topbar {
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+            padding: 0 20px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-card);
+            box-shadow: var(--shadow);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .brand-logo {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            background: var(--dhl-red);
+            display: grid;
+            place-items: center;
+            color: white;
+            font-weight: 900;
+            letter-spacing: 0.16em;
+            font-size: 16px;
+        }
+
+        .brand-copy h1 {
+            margin: 0;
+            font-size: 18px;
+            letter-spacing: 0.04em;
+        }
+
+        .brand-copy p {
+            margin: 4px 0 0;
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        .topbar-meta {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        .topbar-meta strong {
+            color: var(--text-primary);
+            font-weight: 700;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            border: 0;
+            border-radius: var(--radius-small);
+            cursor: pointer;
+            font-weight: 700;
+            transition: transform 0.2s ease, filter 0.2s ease, background 0.2s ease;
+        }
+
+        .btn.primary { background: var(--dhl-red); color: white; padding: 0 18px; }
+        .btn.secondary { background: transparent; color: var(--text-primary); border: 1px solid var(--border); padding: 0 18px; }
+        .btn:hover { filter: brightness(1.05); }
+
+        .filters {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr 0.9fr;
+            gap: 12px;
+            padding: 18px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-card);
+            box-shadow: var(--shadow);
+            align-items: end;
+        }
+
+        .filter-group { display: grid; gap: 8px; }
+        .filter-group label {
+            color: var(--text-muted);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .filter-group input,
+        .filter-group select,
+        .filter-toggle {
+            width: 100%;
+            min-height: 42px;
+            padding: 10px 12px;
+            border-radius: var(--radius-small);
+            border: 1px solid var(--border);
+            background: var(--bg-surface);
+            color: var(--text-primary);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .filter-group input:focus,
+        .filter-group select:focus,
+        .filter-toggle:focus {
+            outline: none;
+            border-color: var(--dhl-red);
+            box-shadow: 0 0 0 3px rgba(212,5,17,0.12);
+        }
+
+        .filter-group.status-group { position: relative; }
+        .filter-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            text-align: left;
+            cursor: pointer;
+        }
+
+        .status-options {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            right: 0;
+            padding: 12px;
+            z-index: 15;
+            display: grid;
+            gap: 8px;
+            border-radius: var(--radius-small);
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            max-height: 260px;
+            overflow: auto;
+        }
+
+        .status-options.hidden { display: none; }
+
+        .status-button {
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            background: transparent;
+            color: var(--text-primary);
+            padding: 8px 11px;
+            font-size: 11px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: background 0.2s ease, border-color 0.2s ease;
+        }
+
+        .status-button.active {
+            background: var(--dhl-red);
+            border-color: var(--dhl-red);
+            color: white;
+        }
+
+        .period-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .filter-action {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            min-height: 42px;
+        }
+
+        .filter-action .btn {
+            width: 100%;
+            padding: 12px 0;
+        }
+
+        .filter-status button {
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            background: transparent;
+            color: var(--text-primary);
+            padding: 6px 11px;
+            font-size: 11px;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .filter-status button.active {
+            background: var(--dhl-red);
+            border-color: var(--dhl-red);
+            color: white;
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(240px, 1fr));
+            gap: 16px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-card);
+            box-shadow: var(--shadow);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 146px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card.skeleton::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.08), rgba(255,255,255,0.02));
+            animation: shimmer 1.1s infinite;
+        }
+
+        @keyframes shimmer {0%{transform: translateX(-100%);}100%{transform: translateX(100%);}}
+
+        .card-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+        .card-title { font-size: 13px; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.08em; }
+        .card-value { font-size: 32px; line-height: 1; margin: 12px 0 0; font-weight: 800; }
+        .card-meta { display: flex; align-items: center; gap: 10px; color: var(--text-muted); font-size: 12px; }
+        .card-icon { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; background: rgba(255,255,255,0.06); }
+
+        .progress-row { display: flex; align-items: center; gap: 10px; margin-top: 14px; }
+        .progress-track { flex: 1; height: 10px; border-radius: 999px; background: #111111; overflow: hidden; }
+        .progress-fill { height: 100%; transition: width 0.8s ease; }
+        .progress-in { background: linear-gradient(90deg, rgba(212,5,17,0.92), rgba(239,68,68,0.9)); }
+        .progress-out { background: linear-gradient(90deg, rgba(59,130,246,0.92), rgba(37,99,235,0.9)); }
+
+        .layout { display: grid; grid-template-columns: repeat(3, minmax(320px, 1fr)); gap: 16px; }
+        .table-layout { display: grid; grid-template-columns: repeat(2, minmax(320px, 1fr)); gap: 16px; }
+        .chart-panel, .table-panel, .footer-panel { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow); overflow: hidden; }
+        .chart-panel { display: flex; flex-direction: column; }
+        .panel-head { padding: 20px 22px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+        .panel-head h2 { margin: 0; font-size: 16px; }
+        .panel-head p { margin: 6px 0 0; color: var(--text-muted); font-size: 13px; }
+        .panel-body { padding: 18px; flex: 1; }
+        .panel-body canvas { width: 100% !important; height: 100% !important; }
+
+        .table-panel { display: grid; grid-template-rows: auto 1fr auto; }
+        .table-wrapper { overflow: auto; padding: 0 20px 20px; }
+        table { width: 100%; border-collapse: collapse; min-width: 780px; }
+        th, td { padding: 14px 12px; border-bottom: 1px solid rgba(255,255,255,0.06); font-size: 13px; }
+        th { position: sticky; top: 0; background: rgba(16,16,16,0.95); color: var(--text-primary); cursor: pointer; }
+        th .sort-indicator { margin-left: 8px; font-size: 10px; color: var(--text-muted); }
+        tbody tr { transition: background 0.2s ease; cursor: pointer; }
+        tbody tr:hover { background: rgba(255,255,255,0.05); }
+        .badge { display: inline-flex; align-items: center; justify-content: center; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+        .badge-patio { background: var(--status-patio); color: #111827; }
+        .badge-doca { background: var(--status-doca); color: #EFF6FF; }
+        .badge-separado { background: var(--status-separado); color: #ECFDF5; }
+        .badge-separando { background: var(--status-separando); color: #F3E8FF; }
+        .badge-liberado { background: var(--status-liberado); color: #F9FAFB; }
+        .pagination { padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; color: var(--text-muted); }
+        .pagination button { border: 1px solid var(--border); border-radius: 8px; background: transparent; color: var(--text-primary); padding: 10px 14px; cursor: pointer; transition: background 0.2s ease; }
+        .pagination button:disabled { opacity: 0.35; cursor: not-allowed; }
+
+        .footer-panel { display: grid; grid-template-columns: repeat(2, minmax(320px, 1fr)); gap: 16px; padding: 20px; }
+        .footer-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-card); padding: 20px; }
+        .footer-card h3 { margin: 0 0 14px; font-size: 15px; }
+        .summary-row { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; padding: 14px 0; border-top: 1px solid rgba(255,255,255,0.06); }
+        .summary-row:first-child { border-top: none; }
+        .summary-row span { color: var(--text-primary); font-size: 13px; }
+        .summary-row span:nth-child(2) { color: var(--text-muted); }
+        .summary-row span:last-child { color: var(--dhl-red); font-weight: 700; }
+        .legend { display: flex; flex-wrap: wrap; gap: 12px; }
+        .legend-item { display: inline-flex; gap: 8px; align-items: center; color: var(--text-primary); font-size: 13px; }
+        .legend-dot { width: 11px; height: 11px; border-radius: 50%; display: inline-block; }
+
+        .drawer {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: min(420px, 100%);
+            height: 100vh;
+            background: var(--bg-primary);
+            border-left: 1px solid rgba(255,255,255,0.08);
+            transform: translateX(100%);
+            transition: transform 0.28s ease;
+            z-index: 40;
+            display: flex;
+            flex-direction: column;
+        }
+        .drawer.open { transform: translateX(0); }
+        .drawer-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 22px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+        .drawer-header h2 { margin: 0; font-size: 17px; }
+        .drawer-body { padding: 22px; overflow-y: auto; display: grid; gap: 20px; }
+        .drawer-row strong { display: block; color: var(--text-muted); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px; }
+        .drawer-row span { color: var(--text-primary); font-size: 15px; }
+        .drawer-chart { min-height: 240px; }
+        .drawer-close { border: 1px solid var(--border); background: transparent; color: var(--text-primary); border-radius: var(--radius-small); padding: 10px 14px; cursor: pointer; }
+
+        .no-results td { text-align: center; color: var(--text-muted); padding: 24px 0; }
+
+        @media (max-width: 1200px) {
+            .filters { grid-template-columns: 1fr; }
+            .cards { grid-template-columns: 1fr 1fr; }
+            .layout { grid-template-columns: 1fr; }
+            .footer-panel { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 720px) {
+            .topbar { flex-direction: column; align-items: stretch; height: auto; padding: 18px; }
+            .topbar-meta { justify-content: space-between; width: 100%; }
+            .header-actions { justify-content: flex-start; }
+            .cards { grid-template-columns: 1fr; }
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <main class="page">
+        <header>
+            <div class="topbar">
+                <div class="brand">
+                    <div class="brand-logo">DHL</div>
+                    <div class="brand-copy">
+                        <h1>Dashboard Operacional</h1>
+                        <p>Visão Inbound & Outbound</p>
+                    </div>
+                </div>
+                <div class="topbar-meta">
+                    <span>Última atualização <strong id="lastUpdate">--</strong></span>
+                </div>
+                <div class="header-actions">
+                    <button id="btnExport" class="btn primary">Exportar CSV</button>
+                </div>
+            </div>
+            <div class="filters">
+                <div class="filter-group filter-period">
+                    <label>Período</label>
+                    <div class="period-inputs">
+                        <input id="dateStart" type="date" />
+                        <input id="dateEnd" type="date" />
+                    </div>
+                </div>
+                <div class="filter-group status-group">
+                    <label>Status</label>
+                    <button type="button" id="statusToggle" class="filter-toggle">Selecionar status <span>▾</span></button>
+                    <div class="status-options hidden" id="statusOptions"></div>
+                </div>
+                <div class="filter-group">
+                    <label>Transportadora</label>
+                    <select id="transportFilter"></select>
+                </div>
+                <div class="filter-group">
+                    <label>Destino</label>
+                    <input id="destinoFilter" type="search" placeholder="Buscar destino" />
+                </div>
+                <div class="filter-group filter-action">
+                    <button id="btnClear" class="btn secondary">Limpar</button>
+                </div>
+            </div>
+        </header>
+
+        <section class="cards" id="kpis">
+            <article class="card" id="kpiRecords">
+                <div class="card-header">
+                    <div class="card-title">Total de Registros</div>
+                    <div class="card-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16v11H4z"/><path d="M9 7V4h6v3"/><path d="M8 13h8"/></svg></div>
+                </div>
+                <div class="card-value" data-target>0</div>
+                <div class="card-meta">Inbound + Outbound</div>
+            </article>
+            <article class="card" id="kpiTons">
+                <div class="card-header">
+                    <div class="card-title">Total de TONS</div>
+                    <div class="card-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 20h10"/><path d="M12 4v10"/><path d="M7 14a5 5 0 0 1 10 0"/></svg></div>
+                </div>
+                <div class="card-value" data-target>0</div>
+                <div class="card-meta">Soma de toneladas</div>
+            </article>
+            <article class="card" id="kpiRatioCard">
+                <div class="card-header">
+                    <div class="card-title">Inbound vs Outbound</div>
+                    <div class="card-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12h6"/><path d="M13 6h6"/><path d="M13 18h6"/></svg></div>
+                </div>
+                <div class="card-value" id="ratioValue">0 / 0</div>
+                <div class="progress-row">
+                    <div class="progress-track"><span class="progress-fill progress-in" id="barIn" style="width:50%;"></span></div>
+                    <div class="progress-track"><span class="progress-fill progress-out" id="barOut" style="width:50%;"></span></div>
+                </div>
+            </article>
+            <article class="card" id="kpiStatus">
+                <div class="card-header">
+                    <div class="card-title">Status mais crítico</div>
+                    <div class="card-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 5v14"/><path d="M5 12h14"/></svg></div>
+                </div>
+                <div class="card-value" id="criticalValue">-</div>
+                <div class="card-meta" id="criticalBadge"></div>
+            </article>
+        </section>
+
+        <section class="layout">
+            <article class="chart-panel">
+                <div class="panel-head"><h2>Volume semanal</h2><p>Inbound x Outbound por semana</p></div>
+                <div class="panel-body"><canvas id="barChart"></canvas></div>
+            </article>
+            <article class="chart-panel">
+                <div class="panel-head"><h2>TONS ao longo do tempo</h2><p>Comparativo de linhas por data</p></div>
+                <div class="panel-body"><canvas id="lineChart"></canvas></div>
+            </article>
+            <article class="chart-panel">
+                <div class="panel-head"><h2>Distribuição por status</h2><p>Clique em qualquer fatia para filtrar</p></div>
+                <div class="panel-body"><canvas id="donutChart"></canvas></div>
+            </article>
+        </section>
+
+        <section class="table-layout">
+            <article class="table-panel">
+                <div class="panel-head"><h2>Tabela INBOUND</h2><p>Entradas com ordenação nativa</p></div>
+                <div class="table-wrapper">
+                    <table id="tableInbound"><thead><tr>
+                        <th data-field="data">Data<span class="sort-indicator"></span></th>
+                        <th data-field="status">Status<span class="sort-indicator"></span></th>
+                        <th data-field="tipo">Tipo<span class="sort-indicator"></span></th>
+                        <th data-field="destino">Destino<span class="sort-indicator"></span></th>
+                        <th data-field="transportadora">Transportadora<span class="sort-indicator"></span></th>
+                        <th data-field="tons">TONS<span class="sort-indicator"></span></th>
+                    </tr></thead><tbody></tbody></table>
+                </div>
+                <div class="pagination" id="paginationInbound"></div>
+            </article>
+            <article class="table-panel">
+                <div class="panel-head"><h2>Tabela OUTBOUND</h2><p>Saídas com ordenação nativa</p></div>
+                <div class="table-wrapper">
+                    <table id="tableOutbound"><thead><tr>
+                        <th data-field="data">Data<span class="sort-indicator"></span></th>
+                        <th data-field="status">Status<span class="sort-indicator"></span></th>
+                        <th data-field="tipo">Tipo<span class="sort-indicator"></span></th>
+                        <th data-field="destino">Destino<span class="sort-indicator"></span></th>
+                        <th data-field="transportadora">Transportadora<span class="sort-indicator"></span></th>
+                        <th data-field="tons">TONS<span class="sort-indicator"></span></th>
+                    </tr></thead><tbody></tbody></table>
+                </div>
+                <div class="pagination" id="paginationOutbound"></div>
+            </article>
+        </section>
+
+        <section class="footer-panel">
+            <div class="footer-card">
+                <h3>Totalizadores por transportadora</h3>
+                <div id="carrierSummary"></div>
+            </div>
+            <div class="footer-card">
+                <h3>Legendagem de status</h3>
+                <div class="legend" id="statusLegend"></div>
+            </div>
+        </section>
+    </main>
+
+    <aside class="drawer" id="drawerPanel" aria-hidden="true">
+        <div class="drawer-header">
+            <div>
+                <h2>Detalhes do registro</h2>
+                <p id="drawerSubtitle" style="color:var(--text-muted);font-size:13px;margin-top:4px;">Clique em uma linha para ver detalhes</p>
+            </div>
+            <button class="drawer-close" id="closeDrawer">Fechar</button>
+        </div>
+        <div class="drawer-body">
+            <div class="drawer-row"><strong>Data da operação</strong><span id="detailDate">-</span></div>
+            <div class="drawer-row"><strong>Status</strong><span id="detailStatus">-</span></div>
+            <div class="drawer-row"><strong>Tipo</strong><span id="detailType">-</span></div>
+            <div class="drawer-row"><strong>Destino</strong><span id="detailDestination">-</span></div>
+            <div class="drawer-row"><strong>Transportadora</strong><span id="detailCarrier">-</span></div>
+            <div class="drawer-row"><strong>TONS</strong><span id="detailTons">-</span></div>
+            <div class="drawer-row"><strong>Histórico de carga</strong><div class="drawer-chart"><canvas id="drawerChart"></canvas></div></div>
+        </div>
+    </aside>
+
+    <script>
+        const inboundData = [
+            { data: '01/06/2026', status: 'Separado', tipo: 'Entrada', destino: 'PORTO BELO - SC', transportadora: 'COOCATRANS S.A', tons: 5.00 },
+            { data: '02/06/2026', status: 'Separado', tipo: 'Entrada', destino: 'PORTO BELO - SC', transportadora: 'COOCATRANS S.A', tons: 4.00 },
+            { data: '03/06/2026', status: 'Separado', tipo: 'Entrada', destino: 'PORTO BELO - SC', transportadora: 'COOCATRANS S.A', tons: 6.00 },
+            { data: '07/06/2026', status: 'Doca', tipo: 'Entrada', destino: 'FOZ DO IGUAÇU - PR', transportadora: 'BBT TRANSPORTES LTDA', tons: 7.00 },
+            { data: '08/06/2026', status: 'Doca', tipo: 'Entrada', destino: 'FOZ DO IGUAÇU - PR', transportadora: 'BBT TRANSPORTES LTDA', tons: 3.00 },
+            { data: '09/06/2026', status: 'Doca', tipo: 'Entrada', destino: 'FOZ DO IGUAÇU - PR', transportadora: 'BBT TRANSPORTES LTDA', tons: 4.00 },
+            { data: '19/06/2026', status: 'Pátio', tipo: 'Entrada', destino: 'ICARA - SC', transportadora: 'MEATIMPEX LOGISTICA LTDA', tons: 12.00 },
+            { data: '20/06/2026', status: 'Pátio', tipo: 'Entrada', destino: 'ICARA - SC', transportadora: 'MEATIMPEX LOGISTICA LTDA', tons: 6.00 },
+            { data: '21/06/2026', status: 'Pátio', tipo: 'Entrada', destino: 'ICARA - SC', transportadora: 'MEATIMPEX LOGISTICA LTDA', tons: 7.00 },
+            { data: '04/07/2026', status: 'Separando', tipo: 'Entrada', destino: 'PORTO BELO - SC', transportadora: 'COOCATRANS S.A', tons: 5.00 },
+            { data: '05/07/2026', status: 'Separando', tipo: 'Entrada', destino: 'PORTO BELO - SC', transportadora: 'COOCATRANS S.A', tons: 4.00 },
+            { data: '06/07/2026', status: 'Separando', tipo: 'Entrada', destino: 'PORTO BELO - SC', transportadora: 'COOCATRANS S.A', tons: 6.00 }
+        ];
+
+        const outboundData = inboundData.map(item => {
+            const [day, month, year] = item.data.split('/').map(Number);
+            const date = new Date(year, month - 1, day + 3);
+            const pad = num => String(num).padStart(2, '0');
+            const statusMap = { 'Separado': 'Separando', 'Doca': 'Liberado', 'Pátio': 'Doca', 'Separando': 'Separado', 'Liberado': 'Pátio' };
+            return {
+                data: `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()}`,
+                status: statusMap[item.status] || item.status,
+                tipo: 'Saída',
+                destino: item.destino,
+                transportadora: item.transportadora,
+                tons: item.tons
+            };
+        });
+
+        const statusColors = {
+            'Pátio': '#F59E0B',
+            'Doca': '#3B82F6',
+            'Separado': '#10B981',
+            'Separando': '#8B5CF6',
+            'Liberado': '#6B7280'
+        };
+
+        const statusKeys = Object.keys(statusColors);
+        const rowsPerPage = 10;
+        let barChart, lineChart, donutChart, drawerChart;
+
+        const state = {
+            dateStart: '',
+            dateEnd: '',
+            statuses: new Set(statusKeys),
+            transportadora: '',
+            destino: '',
+            sort: { inbound: { field: 'data', asc: false }, outbound: { field: 'data', asc: false } },
+            page: { inbound: 1, outbound: 1 }
+        };
+
+        const parseDDMMYYYY = value => {
+            if (!value) return null;
+            const [d, m, y] = value.split('/').map(Number);
+            return new Date(y, m - 1, d);
+        };
+
+        const normalize = text => (text || '').toString().trim().toLowerCase();
+
+        const getStorageKey = () => 'dhl-dashboard-filters-v1';
+        const saveState = () => {
+            localStorage.setItem(getStorageKey(), JSON.stringify({
+                dateStart: state.dateStart,
+                dateEnd: state.dateEnd,
+                statuses: Array.from(state.statuses),
+                transportadora: state.transportadora,
+                destino: state.destino
+            }));
+        };
+
+        const loadState = () => {
+            try {
+                const stored = JSON.parse(localStorage.getItem(getStorageKey()) || '{}');
+                if (stored.dateStart) state.dateStart = stored.dateStart;
+                if (stored.dateEnd) state.dateEnd = stored.dateEnd;
+                if (Array.isArray(stored.statuses) && stored.statuses.length) state.statuses = new Set(stored.statuses);
+                if (stored.transportadora) state.transportadora = stored.transportadora;
+                if (stored.destino) state.destino = stored.destino;
+            } catch (error) {
+                console.warn('Não foi possível carregar filtros:', error);
+            }
+        };
+
+        const getAllData = () => inboundData.concat(outboundData);
+        const isVisible = record => {
+            const start = state.dateStart ? new Date(state.dateStart) : null;
+            const end = state.dateEnd ? new Date(state.dateEnd) : null;
+            const recordDate = parseDDMMYYYY(record.data);
+            if (start && recordDate < start) return false;
+            if (end && recordDate > end) return false;
+            if (!state.statuses.has(record.status)) return false;
+            if (state.transportadora && record.transportadora !== state.transportadora) return false;
+            if (state.destino && !normalize(record.destino).includes(normalize(state.destino))) return false;
+            return true;
+        };
+
+        const filterData = data => data.filter(isVisible);
+        const sortData = (data, field, asc) => data.slice().sort((a, b) => {
+            if (field === 'data') {
+                return asc ? parseDDMMYYYY(a.data) - parseDDMMYYYY(b.data) : parseDDMMYYYY(b.data) - parseDDMMYYYY(a.data);
+            }
+            if (field === 'tons') return asc ? a.tons - b.tons : b.tons - a.tons;
+            return asc ? normalize(a[field]).localeCompare(normalize(b[field]), 'pt-BR', { numeric: true }) : normalize(b[field]).localeCompare(normalize(a[field]), 'pt-BR', { numeric: true });
+        });
+
+        const animateNumber = (element, target, suffix = '') => {
+            const start = 0;
+            const duration = 800;
+            const beginning = start;
+            const startTime = performance.now();
+            const tick = now => {
+                const progress = Math.min((now - startTime) / duration, 1);
+                const value = Math.floor(beginning + (target - beginning) * progress);
+                element.textContent = `${value.toLocaleString('pt-BR')}${suffix}`;
+                if (progress < 1) requestAnimationFrame(tick);
+            };
+            requestAnimationFrame(tick);
+        };
+
+        const createBadge = status => {
+            const badge = document.createElement('span');
+            const key = status.toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '');
+            badge.className = `badge badge-${key}`;
+            badge.textContent = status;
+            return badge;
+        };
+
+        const updateTimestamp = () => {
+            document.getElementById('lastUpdate').textContent = new Date().toLocaleString('pt-BR', { hour12: false });
+        };
+
+        const renderStatusButtons = () => {
+            const container = document.getElementById('statusOptions');
+            container.innerHTML = '';
+            statusKeys.forEach(status => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'status-button';
+                button.textContent = status;
+                if (state.statuses.has(status)) button.classList.add('active');
+                button.addEventListener('click', () => {
+                    if (state.statuses.has(status)) state.statuses.delete(status);
+                    else state.statuses.add(status);
+                    if (!state.statuses.size) state.statuses = new Set(statusKeys);
+                    state.page.inbound = 1;
+                    state.page.outbound = 1;
+                    render();
+                });
+                container.appendChild(button);
+            });
+        };
+
+        const toggleStatusDropdown = () => {
+            const options = document.getElementById('statusOptions');
+            options.classList.toggle('hidden');
+        };
+
+        const closeStatusDropdown = () => {
+            document.getElementById('statusOptions').classList.add('hidden');
+        };
+
+        const renderTransportFilter = () => {
+            const select = document.getElementById('transportFilter');
+            const transportadoras = Array.from(new Set(getAllData().map(item => item.transportadora))).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+            select.innerHTML = '<option value="">Todas as transportadoras</option>' + transportadoras.map(name => `<option value="${name}">${name}</option>`).join('');
+            select.value = state.transportadora;
+        };
+
+        const renderKpis = () => {
+            document.querySelectorAll('#kpis .card').forEach(card => card.classList.add('skeleton'));
+            const inbound = filterData(inboundData);
+            const outbound = filterData(outboundData);
+            const combined = inbound.concat(outbound);
+            const total = combined.length;
+            const tons = combined.reduce((sum, row) => sum + row.tons, 0);
+            const statusCount = combined.reduce((acc, row) => { acc[row.status] = (acc[row.status] || 0) + 1; return acc; }, {});
+            const critical = statusKeys.reduce((best, status) => !best || (statusCount[status] || 0) > (statusCount[best] || 0) ? status : best, statusKeys[0]);
+            setTimeout(() => {
+                animateNumber(document.querySelector('#kpiRecords [data-target]'), total);
+                animateNumber(document.querySelector('#kpiTons [data-target]'), Math.round(tons));
+                document.getElementById('ratioValue').textContent = `${inbound.length} / ${outbound.length}`;
+                document.getElementById('barIn').style.width = total ? `${Math.round((inbound.length / total) * 100)}%` : '50%';
+                document.getElementById('barOut').style.width = total ? `${Math.round((outbound.length / total) * 100)}%` : '50%';
+                document.getElementById('criticalValue').textContent = critical || '-';
+                const criticalBadge = document.getElementById('criticalBadge');
+                criticalBadge.innerHTML = '';
+                if (critical) criticalBadge.appendChild(createBadge(critical));
+                document.querySelectorAll('#kpis .card').forEach(card => card.classList.remove('skeleton'));
+            }, 120);
+        };
+
+        const getWeeklyData = combined => {
+            const buckets = {};
+            combined.forEach(row => {
+                const date = parseDDMMYYYY(row.data);
+                const week = `${date.getFullYear()} W${Math.ceil((date.getDate() + 6 - date.getDay()) / 7)}`;
+                if (!buckets[week]) buckets[week] = { inbound: 0, outbound: 0 };
+                if (row.tipo === 'Entrada') buckets[week].inbound += row.tons;
+                else buckets[week].outbound += row.tons;
+            });
+            const labels = Object.keys(buckets).sort((a, b) => a.localeCompare(b, 'pt-BR', { numeric: true }));
+            return { labels, buckets };
+        };
+
+        const renderCharts = () => {
+            const combined = getAllData().filter(isVisible);
+            const { labels: weekLabels, buckets } = getWeeklyData(combined);
+            const inboundSeries = weekLabels.map(label => buckets[label].inbound || 0);
+            const outboundSeries = weekLabels.map(label => buckets[label].outbound || 0);
+            const dailyMap = {};
+            combined.forEach(row => {
+                if (!dailyMap[row.data]) dailyMap[row.data] = { inbound: 0, outbound: 0 };
+                if (row.tipo === 'Entrada') dailyMap[row.data].inbound += row.tons;
+                else dailyMap[row.data].outbound += row.tons;
+            });
+            const dailyLabels = Object.keys(dailyMap).sort((a,b) => parseDDMMYYYY(a) - parseDDMMYYYY(b));
+            const dailyInbound = dailyLabels.map(label => dailyMap[label].inbound || 0);
+            const dailyOutbound = dailyLabels.map(label => dailyMap[label].outbound || 0);
+            const statusCounts = statusKeys.map(key => combined.filter(row => row.status === key).length);
+            const chartOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    tooltip: {
+                        backgroundColor: '#0D0D0D',
+                        borderColor: 'rgba(212,5,17,0.9)',
+                        borderWidth: 1,
+                        titleColor: '#fff',
+                        bodyColor: '#F0F0F0',
+                        padding: 12,
+                        displayColors: false,
+                        callbacks: { label: ctx => `${ctx.label}: ${ctx.formattedValue}` }
+                    },
+                    legend: { labels: { color: '#F0F0F0' } }
+                },
+                scales: {
+                    x: { ticks: { color: '#B8B8B8' }, grid: { color: 'rgba(255,255,255,0.06)' } },
+                    y: { ticks: { color: '#B8B8B8' }, grid: { color: 'rgba(255,255,255,0.06)' } }
+                }
+            };
+            if (barChart) {
+                barChart.data.labels = weekLabels;
+                barChart.data.datasets[0].data = inboundSeries;
+                barChart.data.datasets[1].data = outboundSeries;
+                barChart.update();
+            } else {
+                barChart = new Chart(document.getElementById('barChart').getContext('2d'), {
+                    type: 'bar',
+                    data: { labels: weekLabels, datasets: [
+                        { label: 'Inbound', data: inboundSeries, backgroundColor: 'rgba(212,5,17,0.9)', borderRadius: 10, maxBarThickness: 28 },
+                        { label: 'Outbound', data: outboundSeries, backgroundColor: 'rgba(59,130,246,0.9)', borderRadius: 10, maxBarThickness: 28 }
+                    ] },
+                    options: { ...chartOptions, interaction: { mode: 'index', intersect: false } }
+                });
+            }
+            if (lineChart) {
+                lineChart.data.labels = dailyLabels;
+                lineChart.data.datasets[0].data = dailyInbound;
+                lineChart.data.datasets[1].data = dailyOutbound;
+                lineChart.update();
+            } else {
+                lineChart = new Chart(document.getElementById('lineChart').getContext('2d'), {
+                    type: 'line',
+                    data: { labels: dailyLabels, datasets: [
+                        { label: 'Inbound', data: dailyInbound, borderColor: '#D40511', backgroundColor: 'rgba(212,5,17,0.28)', fill: true, tension: 0.3, pointRadius: 4, pointBackgroundColor: '#D40511' },
+                        { label: 'Outbound', data: dailyOutbound, borderColor: '#3B82F6', backgroundColor: 'rgba(59,130,246,0.22)', fill: true, tension: 0.3, pointRadius: 4, pointBackgroundColor: '#3B82F6' }
+                    ] },
+                    options: { ...chartOptions, interaction: { mode: 'index', intersect: false } }
+                });
+            }
+            if (donutChart) {
+                donutChart.data.labels = statusKeys;
+                donutChart.data.datasets[0].data = statusCounts;
+                donutChart.update();
+            } else {
+                donutChart = new Chart(document.getElementById('donutChart').getContext('2d'), {
+                    type: 'doughnut',
+                    data: { labels: statusKeys, datasets: [{ data: statusCounts, backgroundColor: statusKeys.map(key => statusColors[key]), borderColor: '#0D0D0D', borderWidth: 2 }] },
+                    options: {
+                        ...chartOptions,
+                        plugins: { ...chartOptions.plugins, legend: { display: true, position: 'bottom', labels: { color: '#F0F0F0' } } },
+                        onClick: (event, elements) => {
+                            if (!elements.length) return;
+                            const idx = elements[0].index;
+                            state.statuses = new Set([statusKeys[idx]]);
+                            state.page.inbound = 1;
+                            state.page.outbound = 1;
+                            render();
+                        }
+                    }
+                });
+            }
+        };
+
+        const renderTable = (data, tableId, type) => {
+            const tbody = document.querySelector(`#${tableId} tbody`);
+            const { field, asc } = state.sort[type];
+            const sorted = sortData(data, field, asc);
+            const page = state.page[type];
+            const totalPages = Math.max(1, Math.ceil(sorted.length / rowsPerPage));
+            const rows = sorted.slice((page - 1) * rowsPerPage, page * rowsPerPage);
+            tbody.innerHTML = rows.length ? rows.map(row => `
+                <tr data-row='${JSON.stringify(row).replace(/'/g, "\\'")}'>
+                    <td>${row.data}</td>
+                    <td>${createBadge(row.status).outerHTML}</td>
+                    <td>${row.tipo}</td>
+                    <td>${row.destino}</td>
+                    <td>${row.transportadora}</td>
+                    <td>${row.tons.toFixed(2)}</td>
+                </tr>
+            `).join('') : '<tr class="no-results"><td colspan="6">Nenhum registro encontrado</td></tr>';
+            const pagination = document.getElementById(`pagination${type.charAt(0).toUpperCase() + type.slice(1)}`);
+            pagination.innerHTML = `
+                <button ${page === 1 ? 'disabled' : ''} data-action="prev">Anterior</button>
+                <span>${page} / ${totalPages}</span>
+                <button ${page === totalPages ? 'disabled' : ''} data-action="next">Próximo</button>
+            `;
+            pagination.querySelectorAll('button').forEach(button => {
+                button.addEventListener('click', () => {
+                    if (button.dataset.action === 'prev' && page > 1) state.page[type] -= 1;
+                    if (button.dataset.action === 'next' && page < totalPages) state.page[type] += 1;
+                    render();
+                });
+            });
+        };
+
+        const renderTables = () => {
+            renderTable(filterData(inboundData), 'tableInbound', 'inbound');
+            renderTable(filterData(outboundData), 'tableOutbound', 'outbound');
+            document.querySelectorAll('th').forEach(th => {
+                const type = th.closest('table').id === 'tableInbound' ? 'inbound' : 'outbound';
+                const indicator = th.querySelector('.sort-indicator');
+                indicator.textContent = state.sort[type].field === th.dataset.field ? (state.sort[type].asc ? '▲' : '▼') : '';
+            });
+            attachRowEvents();
+        };
+
+        const renderFooter = () => {
+            const container = document.getElementById('carrierSummary');
+            const totals = {};
+            filterData(getAllData()).forEach(row => {
+                if (!totals[row.transportadora]) totals[row.transportadora] = { tons: 0, count: 0 };
+                totals[row.transportadora].tons += row.tons;
+                totals[row.transportadora].count += 1;
+            });
+            container.innerHTML = Object.entries(totals).sort((a, b) => b[1].tons - a[1].tons).map(([name, meta]) => `
+                <div class="summary-row"><span>${name}</span><span>${meta.count} registros</span><span>${meta.tons.toFixed(2)} TONS</span></div>`).join('') || '<p style="color:var(--text-muted);">Nenhum registro disponível.</p>';
+            document.getElementById('statusLegend').innerHTML = statusKeys.map(status => `
+                <span class="legend-item"><span class="legend-dot" style="background:${statusColors[status]}"></span>${status}</span>`).join('');
+        };
+
+        const initializeSort = tableId => {
+            document.querySelectorAll(`#${tableId} th`).forEach(th => {
+                th.addEventListener('click', () => {
+                    const type = tableId === 'tableInbound' ? 'inbound' : 'outbound';
+                    const field = th.dataset.field;
+                    if (state.sort[type].field === field) state.sort[type].asc = !state.sort[type].asc;
+                    else { state.sort[type].field = field; state.sort[type].asc = true; }
+                    state.page[type] = 1;
+                    renderTables();
+                });
+            });
+        };
+
+        const attachRowEvents = () => {
+            document.querySelectorAll('tbody tr[data-row]').forEach(row => {
+                row.addEventListener('click', () => {
+                    const record = JSON.parse(row.dataset.row);
+                    openDrawer(record);
+                });
+            });
+        };
+
+        const openDrawer = record => {
+            const drawer = document.getElementById('drawerPanel');
+            drawer.classList.add('open');
+            drawer.setAttribute('aria-hidden', 'false');
+            document.getElementById('detailDate').textContent = record.data;
+            document.getElementById('detailStatus').textContent = record.status;
+            document.getElementById('detailType').textContent = record.tipo;
+            document.getElementById('detailDestination').textContent = record.destino;
+            document.getElementById('detailCarrier').textContent = record.transportadora;
+            document.getElementById('detailTons').textContent = `${record.tons.toFixed(2)} TONS`;
+            document.getElementById('drawerSubtitle').textContent = `Transportadora: ${record.transportadora}`;
+            const history = getAllData().filter(row => row.transportadora === record.transportadora).sort((a, b) => parseDDMMYYYY(a.data) - parseDDMMYYYY(b.data));
+            const labels = history.map(row => row.data);
+            const values = history.map(row => row.tons);
+            if (drawerChart) {
+                drawerChart.data.labels = labels;
+                drawerChart.data.datasets[0].data = values;
+                drawerChart.update();
+            } else {
+                drawerChart = new Chart(document.getElementById('drawerChart').getContext('2d'), {
+                    type: 'line',
+                    data: { labels, datasets: [{ label: 'TONS', data: values, borderColor: '#FFCC00', backgroundColor: 'rgba(255,204,0,0.18)', fill: true, tension: 0.32, pointRadius: 3 }] },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { tooltip: { backgroundColor: '#0D0D0D', borderColor: '#FFCC00', borderWidth: 1, titleColor: '#fff', bodyColor: '#F0F0F0' }, legend: { display: false } },
+                        scales: { x: { ticks: { color: '#B8B8B8' }, grid: { color: 'rgba(255,255,255,0.06)' } }, y: { ticks: { color: '#B8B8B8' }, grid: { color: 'rgba(255,255,255,0.06)' } } }
+                    }
+                });
+            }
+        };
+
+        const closeDrawer = () => {
+            const drawer = document.getElementById('drawerPanel');
+            drawer.classList.remove('open');
+            drawer.setAttribute('aria-hidden', 'true');
+        };
+
+        const exportCsv = () => {
+            const rows = ['Data,Status,Tipo,Destino,Transportadora,TONS'];
+            filterData(getAllData()).forEach(row => rows.push(`"${row.data}","${row.status}","${row.tipo}","${row.destino}","${row.transportadora}","${row.tons.toFixed(2)}"`));
+            const blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `dhl_dashboard_${new Date().toISOString().slice(0,10)}.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        };
+
+        const clearFilters = () => {
+            const active = state.dateStart || state.dateEnd || state.transportadora || state.destino || state.statuses.size !== statusKeys.length;
+            const btn = document.getElementById('btnClear');
+            if (!active) {
+                btn.classList.add('shake');
+                setTimeout(() => btn.classList.remove('shake'), 360);
+                return;
+            }
+            state.dateStart = '';
+            state.dateEnd = '';
+            state.transportadora = '';
+            state.destino = '';
+            state.statuses = new Set(statusKeys);
+            state.page.inbound = 1;
+            state.page.outbound = 1;
+            document.getElementById('dateStart').value = '';
+            document.getElementById('dateEnd').value = '';
+            document.getElementById('transportFilter').value = '';
+            document.getElementById('destinoFilter').value = '';
+            render();
+        };
+
+        const debounce = (fn, delay) => {
+            let timer;
+            return (...args) => { clearTimeout(timer); timer = setTimeout(() => fn(...args), delay); };
+        };
+
+        const bindEvents = () => {
+            document.getElementById('btnExport').addEventListener('click', exportCsv);
+            document.getElementById('btnClear').addEventListener('click', clearFilters);
+            document.getElementById('closeDrawer').addEventListener('click', closeDrawer);
+            document.getElementById('statusToggle').addEventListener('click', toggleStatusDropdown);
+            document.addEventListener('click', event => {
+                if (!event.target.closest('.status-group')) closeStatusDropdown();
+            });
+            document.getElementById('dateStart').addEventListener('change', event => { state.dateStart = event.target.value; state.page.inbound = 1; state.page.outbound = 1; render(); });
+            document.getElementById('dateEnd').addEventListener('change', event => { state.dateEnd = event.target.value; state.page.inbound = 1; state.page.outbound = 1; render(); });
+            document.getElementById('transportFilter').addEventListener('change', event => { state.transportadora = event.target.value; state.page.inbound = 1; state.page.outbound = 1; render(); });
+            document.getElementById('destinoFilter').addEventListener('input', debounce(event => { state.destino = event.target.value; state.page.inbound = 1; state.page.outbound = 1; render(); }, 300));
+        };
+
+        const render = () => {
+            saveState();
+            renderStatusButtons();
+            renderTransportFilter();
+            updateTimestamp();
+            renderKpis();
+            renderCharts();
+            renderTables();
+            renderFooter();
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadState();
+            document.getElementById('dateStart').value = state.dateStart;
+            document.getElementById('dateEnd').value = state.dateEnd;
+            document.getElementById('destinoFilter').value = state.destino;
+            bindEvents();
+            initializeSort('tableInbound');
+            initializeSort('tableOutbound');
+            render();
+        });
+    </script>
+</body>
+</html>
