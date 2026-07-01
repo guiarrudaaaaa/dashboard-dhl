@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login — Admin DHL</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    background: #0B0B0B;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+.card {
+    background: #141414;
+    border: 1px solid #252525;
+    border-radius: 16px;
+    padding: 40px 36px;
+    width: min(400px, 100%);
+    box-shadow: 0 8px 48px rgba(0,0,0,.7);
+}
+.logo-wrap {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 32px;
+}
+.logo {
+    width: 46px; height: 46px;
+    background: #D40511;
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+    color: #fff;
+    font-weight: 900;
+    font-size: 14px;
+    letter-spacing: .08em;
+    flex-shrink: 0;
+}
+.logo-wrap h1 { font-size: 18px; color: #F2F2F2; }
+.logo-wrap p  { font-size: 12px; color: #7A7A7A; margin-top: 3px; }
+.field { margin-bottom: 18px; }
+.field label {
+    display: block;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #7A7A7A;
+    margin-bottom: 7px;
+}
+.field input {
+    width: 100%;
+    height: 44px;
+    background: #1C1C1C;
+    border: 1px solid #2E2E2E;
+    border-radius: 8px;
+    color: #F2F2F2;
+    font-size: 14px;
+    padding: 0 14px;
+    transition: border-color .18s;
+}
+.field input:focus {
+    outline: none;
+    border-color: #D40511;
+    box-shadow: 0 0 0 3px rgba(212,5,17,.12);
+}
+.btn-login {
+    width: 100%;
+    height: 46px;
+    background: #D40511;
+    border: none;
+    border-radius: 9px;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 6px;
+    transition: filter .2s;
+}
+.btn-login:hover { filter: brightness(1.1); }
+.error {
+    background: rgba(239,68,68,.1);
+    border: 1px solid rgba(239,68,68,.3);
+    border-radius: 8px;
+    color: #f87171;
+    font-size: 13px;
+    padding: 12px 14px;
+    margin-bottom: 20px;
+}
+.hint {
+    margin-top: 20px;
+    font-size: 12px;
+    color: #444;
+    text-align: center;
+    line-height: 1.6;
+}
+</style>
+</head>
+<body>
+<div class="card">
+    <div class="logo-wrap">
+        <div class="logo">DHL</div>
+        <div>
+            <h1>Painel Admin</h1>
+            <p>Dashboard Operacional</p>
+        </div>
+    </div>
+
+    {% if error %}
+    <div class="error">{{ error }}</div>
+    {% endif %}
+
+    <form method="POST">
+        <div class="field">
+            <label>Usuário</label>
+            <input type="text" name="usuario" autocomplete="username" required autofocus>
+        </div>
+        <div class="field">
+            <label>Senha</label>
+            <input type="password" name="senha" autocomplete="current-password" required>
+        </div>
+        <button type="submit" class="btn-login">Entrar</button>
+    </form>
+
+    <p class="hint">
+        Acesso restrito ao time de operações.<br>
+        Em caso de dúvida, contate o administrador do sistema.
+    </p>
+</div>
+</body>
+</html>

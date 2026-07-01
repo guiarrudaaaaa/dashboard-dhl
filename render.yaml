@@ -5,3 +5,7 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app
     plan: free
+    disk:
+      name: dhl-db
+      mountPath: /data
+      sizeGB: 1

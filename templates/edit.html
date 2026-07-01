@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Editar Registro — Admin DHL</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    background: #0B0B0B; color: #F2F2F2;
+    min-height: 100vh; display: flex; align-items: center;
+    justify-content: center; padding: 20px;
+}
+.card {
+    background: #141414; border: 1px solid #252525;
+    border-radius: 16px; padding: 34px 30px;
+    width: min(560px, 100%);
+    box-shadow: 0 8px 48px rgba(0,0,0,.7);
+}
+.card-top { display: flex; align-items: center; gap: 14px; margin-bottom: 28px; }
+.logo {
+    width: 42px; height: 42px; background: #D40511;
+    border-radius: 10px; display: grid; place-items: center;
+    color: #fff; font-weight: 900; font-size: 13px; flex-shrink: 0;
+}
+.card-top h1 { font-size: 17px; }
+.card-top p  { font-size: 12px; color: #7A7A7A; margin-top: 3px; }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.fg { display: grid; gap: 7px; }
+.fg.full { grid-column: 1 / -1; }
+.fg label { font-size: 11px; text-transform: uppercase; letter-spacing: .07em; color: #7A7A7A; }
+.fg input, .fg select {
+    height: 44px; background: #1C1C1C;
+    border: 1px solid #2E2E2E; border-radius: 8px;
+    color: #F2F2F2; font-size: 14px; padding: 0 13px; width: 100%;
+    transition: border-color .18s;
+}
+.fg input:focus, .fg select:focus {
+    outline: none; border-color: #D40511;
+    box-shadow: 0 0 0 3px rgba(212,5,17,.1);
+}
+.fg select option { background: #1C1C1C; }
+.divider { border: none; border-top: 1px solid #252525; margin: 22px 0; }
+.btn-row { display: flex; gap: 10px; }
+.btn {
+    flex: 1; height: 46px; border-radius: 9px;
+    font-size: 14px; font-weight: 700; cursor: pointer;
+    border: none; text-decoration: none;
+    display: inline-flex; align-items: center; justify-content: center;
+    transition: filter .18s;
+}
+.btn:hover { filter: brightness(1.1); }
+.btn-red    { background: #D40511; color: #fff; }
+.btn-ghost  { background: transparent; color: #F2F2F2; border: 1px solid #2E2E2E; }
+</style>
+</head>
+<body>
+<div class="card">
+    <div class="card-top">
+        <div class="logo">DHL</div>
+        <div>
+            <h1>Editar Registro #{{ row['id'] }}</h1>
+            <p>Painel Admin — Dashboard Operacional</p>
+        </div>
+    </div>
+
+    <form method="POST">
+        <div class="grid">
+            <div class="fg">
+                <label>Data da operação</label>
+                <input type="text" name="data_operacao" id="dataEdit"
+                       value="{{ row['data_operacao'] }}" maxlength="10" required>
+            </div>
+            <div class="fg">
+                <label>TONS</label>
+                <input type="number" name="tons" step="0.01" min="0"
+                       value="{{ row['tons'] }}" required>
+            </div>
+            <div class="fg">
+                <label>Status</label>
+                <select name="status" required>
+                    {% for s in statuses %}
+                    <option value="{{ s }}" {% if s == row['status'] %}selected{% endif %}>{{ s }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="fg">
+                <label>Tipo</label>
+                <select name="tipo" required>
+                    {% for t in tipos %}
+                    <option value="{{ t }}" {% if t == row['tipo'] %}selected{% endif %}>{{ t }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="fg full">
+                <label>Destino (Cidade - UF)</label>
+                <input type="text" name="destino" value="{{ row['destino'] }}" required>
+            </div>
+            <div class="fg full">
+                <label>Transportadora</label>
+                <input type="text" name="transportadora" value="{{ row['transportadora'] }}" required>
+            </div>
+        </div>
+
+        <hr class="divider">
+
+        <div class="btn-row">
+            <a href="/admin" class="btn btn-ghost">← Cancelar</a>
+            <button type="submit" class="btn btn-red">Salvar alterações</button>
+        </div>
+    </form>
+</div>
+
+<script>
+var di = document.getElementById('dataEdit');
+if (di) {
+    di.addEventListener('input', function () {
+        var v = this.value.replace(/\D/g, '');
+        if (v.length > 2) v = v.slice(0,2) + '/' + v.slice(2);
+        if (v.length > 5) v = v.slice(0,5) + '/' + v.slice(5);
+        this.value = v.slice(0, 10);
+    });
+}
+</script>
+</body>
+</html>

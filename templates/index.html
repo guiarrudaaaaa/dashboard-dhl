@@ -1,1015 +1,967 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Operacional DHL</title>
-    <style>
-        :root {
-            --dhl-red: #D40511;
-            --bg-primary: #0D0D0D;
-            --bg-card: #161616;
-            --bg-surface: #1E1E1E;
-            --border: #2A2A2A;
-            --text-primary: #F0F0F0;
-            --text-muted: #8A8A8A;
-            --status-patio: #F59E0B;
-            --status-doca: #3B82F6;
-            --status-separado: #10B981;
-            --status-separando: #8B5CF6;
-            --status-liberado: #6B7280;
-            --radius-card: 10px;
-            --radius-small: 6px;
-            --shadow: 0 2px 12px rgba(0,0,0,0.4);
-            font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Operacional DHL</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root {
+    --red:#D40511; --bg:#0B0B0B; --card:#141414; --surface:#1C1C1C;
+    --border:#252525; --soft:rgba(255,255,255,.05);
+    --txt:#F2F2F2; --muted:#7A7A7A; --dim:#444;
+    --r:12px; --rs:7px; --shadow:0 2px 16px rgba(0,0,0,.5);
+    font-family:system-ui,-apple-system,'Segoe UI',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--txt);min-height:100%}
+.page{max-width:1800px;margin:0 auto;padding:16px;display:grid;gap:16px}
 
-        * { box-sizing: border-box; }
-        html, body { margin: 0; min-height: 100%; background: var(--bg-primary); color: var(--text-primary); }
-        body { overflow-x: hidden; }
+/* topbar */
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:0 20px;height:64px;background:var(--card);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow)}
+.brand{display:flex;align-items:center;gap:14px}
+.logo{width:40px;height:40px;border-radius:10px;background:var(--red);display:grid;place-items:center;color:#fff;font-weight:900;font-size:14px;letter-spacing:.1em}
+.brand h1{font-size:17px}
+.brand p{color:var(--muted);font-size:12px;margin-top:2px}
+.meta{color:var(--muted);font-size:13px}
+.meta strong{color:var(--txt)}
+.btn{border:none;border-radius:var(--rs);cursor:pointer;font-weight:700;font-size:13px;padding:0 18px;height:38px;transition:filter .2s}
+.btn:hover{filter:brightness(1.1)}
+.btn-red{background:var(--red);color:#fff}
+.btn-outline{background:transparent;color:var(--txt);border:1px solid var(--border)}
+@keyframes shake{0%,100%{transform:translateX(0)}25%,75%{transform:translateX(-4px)}50%{transform:translateX(4px)}}
+.shake{animation:shake .3s ease}
 
-        .page {
-            width: min(100%, 1720px);
-            margin: 0 auto;
-            padding: 18px;
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 18px;
-        }
+/* filters */
+.filters{display:grid;grid-template-columns:2fr 1fr 1fr 1fr auto;gap:12px;padding:16px 20px;background:var(--card);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);align-items:end}
+.fg{display:grid;gap:6px}
+.fg label{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.08em}
+.fg input,.fg select{width:100%;height:40px;padding:0 12px;border-radius:var(--rs);border:1px solid var(--border);background:var(--surface);color:var(--txt);font-size:13px}
+.fg input:focus,.fg select:focus{outline:none;border-color:var(--red)}
+.period{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.status-wrap{position:relative}
+.status-toggle{width:100%;height:40px;padding:0 12px;border-radius:var(--rs);border:1px solid var(--border);background:var(--surface);color:var(--txt);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:space-between}
+.status-dropdown{position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:30;background:var(--card);border:1px solid var(--border);border-radius:var(--rs);padding:8px;display:grid;gap:5px;max-height:260px;overflow:auto}
+.status-dropdown.hidden{display:none}
+.sbtn{border:1px solid var(--border);border-radius:999px;background:transparent;color:var(--txt);padding:6px 12px;font-size:11px;text-transform:uppercase;cursor:pointer}
+.sbtn.on{background:var(--red);border-color:var(--red);color:#fff}
 
-        header {
-            display: grid;
-            gap: 18px;
-        }
+/* kpis */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.kcard{background:var(--card);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);padding:20px;min-height:130px;position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between}
+.kcard::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--red);opacity:.7;border-radius:var(--r) var(--r) 0 0}
+.ktitle{font-size:11px;text-transform:uppercase;color:var(--muted);letter-spacing:.1em}
+.kval{font-size:32px;font-weight:800;line-height:1;margin-top:8px}
+.kmeta{color:var(--muted);font-size:12px;margin-top:4px}
+.prow{display:flex;gap:8px;margin-top:10px}
+.ptrack{flex:1;height:7px;border-radius:999px;background:#0d0d0d;overflow:hidden}
+.pfill{height:100%;border-radius:999px;transition:width .8s ease}
+.pin{background:linear-gradient(90deg,#D40511,#ef4444)}
+.pout{background:linear-gradient(90deg,#3B82F6,#1d4ed8)}
 
-        .topbar {
-            height: 64px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 18px;
-            padding: 0 20px;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-card);
-            box-shadow: var(--shadow);
-        }
+/* two col tables */
+.twocol{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.tpanel{background:var(--card);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);display:flex;flex-direction:column;overflow:hidden}
+.thead{padding:14px 20px;border-bottom:1px solid var(--soft);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.thead-left h2{font-size:15px;display:flex;align-items:center;gap:8px}
+.thead-left h2::before{content:'';width:8px;height:8px;border-radius:50%;display:inline-block}
+.thead.ib h2::before{background:var(--red)}
+.thead.ob h2::before{background:#3B82F6}
+.thead-left p{color:var(--muted);font-size:12px;margin-top:3px}
+.tabsrow{display:flex;gap:4px;background:var(--surface);border-radius:8px;padding:3px}
+.ptab{padding:5px 14px;border-radius:6px;font-size:12px;font-weight:600;border:none;background:transparent;color:var(--muted);cursor:pointer;transition:all .18s;white-space:nowrap}
+.ptab.on{background:var(--card);color:var(--txt);box-shadow:0 1px 4px rgba(0,0,0,.4)}
 
-        .brand {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
+/* records view */
+.vrecords{display:flex;flex-direction:column;flex:1}
+.vrecords.hide,.vdt.hide{display:none}
+.twrap{overflow:auto;padding:0 20px}
+table{width:100%;border-collapse:collapse;min-width:600px}
+th,td{padding:11px 10px;border-bottom:1px solid var(--soft);font-size:13px;text-align:left}
+th{position:sticky;top:0;background:rgba(14,14,14,.97);color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em;cursor:pointer;user-select:none}
+th:hover{color:var(--txt)}
+.si{margin-left:4px;font-size:10px}
+tbody tr{cursor:pointer;transition:background .15s}
+tbody tr:hover{background:rgba(255,255,255,.04)}
+.nodata td{text-align:center;color:var(--muted);padding:24px}
+.pager{padding:12px 20px;display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:13px;border-top:1px solid var(--soft)}
+.pager button{border:1px solid var(--border);border-radius:7px;background:transparent;color:var(--txt);padding:7px 14px;cursor:pointer;font-size:12px}
+.pager button:hover:not(:disabled){background:var(--surface)}
+.pager button:disabled{opacity:.3;cursor:not-allowed}
 
-        .brand-logo {
-            width: 42px;
-            height: 42px;
-            border-radius: 12px;
-            background: var(--dhl-red);
-            display: grid;
-            place-items: center;
-            color: white;
-            font-weight: 900;
-            letter-spacing: 0.16em;
-            font-size: 16px;
-        }
+/* DT view */
+.vdt{flex:1;display:flex;flex-direction:column}
+.dtfilters{padding:10px 20px;display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid var(--soft)}
+.dtfbtn{padding:4px 12px;border-radius:999px;font-size:11px;font-weight:600;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;transition:all .18s}
+.dtfbtn.on{background:var(--red);border-color:var(--red);color:#fff}
+.dtlist{overflow:auto;flex:1;padding:10px 20px;display:flex;flex-direction:column;gap:7px}
+.dtrow{display:grid;grid-template-columns:110px 1fr auto auto auto;align-items:center;gap:10px;padding:10px 12px;background:var(--surface);border-radius:8px;border-left:3px solid transparent}
+.dtrow:hover{background:rgba(255,255,255,.05)}
+.dtrow.high{border-left-color:#EF4444}
+.dtrow.med{border-left-color:#F59E0B}
+.dtrow.low{border-left-color:#10B981}
+.dtdate{font-size:13px;font-weight:700}
+.dtstatuses{display:flex;gap:5px;flex-wrap:wrap}
+.dttons{font-size:12px;font-weight:600;white-space:nowrap}
+.dtreg{font-size:11px;color:var(--muted);white-space:nowrap}
+.dtleg{padding:8px 20px 12px;display:flex;gap:12px;flex-wrap:wrap}
+.dtlegitem{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)}
+.dtlegdot{width:8px;height:8px;border-radius:50%}
+.dtempty{padding:24px;text-align:center;color:var(--muted);font-size:13px}
 
-        .brand-copy h1 {
-            margin: 0;
-            font-size: 18px;
-            letter-spacing: 0.04em;
-        }
+/* badges */
+.badge{display:inline-flex;align-items:center;padding:3px 8px;border-radius:5px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
+.b-pátio,.b-patio{background:rgba(245,158,11,.18);color:#F59E0B}
+.b-doca{background:rgba(59,130,246,.18);color:#3B82F6}
+.b-separado{background:rgba(16,185,129,.18);color:#10B981}
+.b-separando{background:rgba(139,92,246,.18);color:#8B5CF6}
+.b-liberado{background:rgba(34,211,238,.18);color:#22D3EE}
+.b-trânsito,.b-transito{background:rgba(249,115,22,.18);color:#F97316}
+.b-descarregado{background:rgba(236,72,153,.18);color:#EC4899}
+.b-carregando{background:rgba(163,230,53,.18);color:#A3E635}
+.bpri{display:inline-flex;align-items:center;padding:3px 8px;border-radius:5px;font-size:10px;font-weight:700;text-transform:uppercase;white-space:nowrap}
+.bpri.high{background:rgba(239,68,68,.15);color:#EF4444}
+.bpri.med{background:rgba(245,158,11,.15);color:#F59E0B}
+.bpri.low{background:rgba(16,185,129,.15);color:#10B981}
 
-        .brand-copy p {
-            margin: 4px 0 0;
-            color: var(--text-muted);
-            font-size: 13px;
-        }
+/* charts */
+.threecol{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.cpanel{background:var(--card);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);display:flex;flex-direction:column}
+.chead{padding:16px 20px;border-bottom:1px solid var(--soft)}
+.chead h2{font-size:15px}
+.chead p{color:var(--muted);font-size:12px;margin-top:3px}
+.cbody{padding:16px;min-height:240px;flex:1}
+.cbody canvas{width:100%!important;height:100%!important}
 
-        .topbar-meta {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            color: var(--text-muted);
-            font-size: 13px;
-        }
+/* footer */
+.ftgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.ftcard{background:var(--card);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);padding:20px}
+.ftcard h3{font-size:14px;margin-bottom:14px}
+.sumrow{display:grid;grid-template-columns:1fr auto auto;gap:8px;padding:11px 0;border-top:1px solid var(--soft);align-items:center}
+.sumrow:first-child{border-top:none}
+.sumrow span{font-size:13px}
+.sumrow span:nth-child(2){color:var(--muted)}
+.sumrow span:last-child{color:var(--red);font-weight:700}
+.legwrap{display:flex;flex-wrap:wrap;gap:10px}
+.legitem{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted)}
+.legdot{width:10px;height:10px;border-radius:50%}
 
-        .topbar-meta strong {
-            color: var(--text-primary);
-            font-weight: 700;
-        }
+/* drawer */
+.drawer{position:fixed;top:0;right:0;width:min(400px,100%);height:100vh;background:var(--card);border-left:1px solid var(--border);transform:translateX(100%);transition:transform .26s ease;z-index:50;display:flex;flex-direction:column}
+.drawer.open{transform:translateX(0);box-shadow:-8px 0 40px rgba(0,0,0,.5)}
+.drhead{padding:20px 22px;border-bottom:1px solid var(--soft);display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.drhead h2{font-size:16px}
+.drbody{padding:20px 22px;overflow-y:auto;display:grid;gap:18px}
+.drrow strong{display:block;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px}
+.drrow span{font-size:15px}
+.drchart{min-height:200px}
+.drclose{border:1px solid var(--border);background:transparent;color:var(--txt);border-radius:var(--rs);padding:8px 14px;cursor:pointer;font-size:12px;flex-shrink:0}
 
-        .header-actions {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-
-        .btn {
-            border: 0;
-            border-radius: var(--radius-small);
-            cursor: pointer;
-            font-weight: 700;
-            transition: transform 0.2s ease, filter 0.2s ease, background 0.2s ease;
-        }
-
-        .btn.primary { background: var(--dhl-red); color: white; padding: 0 18px; }
-        .btn.secondary { background: transparent; color: var(--text-primary); border: 1px solid var(--border); padding: 0 18px; }
-        .btn:hover { filter: brightness(1.05); }
-
-        .filters {
-            display: grid;
-            grid-template-columns: 2fr 1fr 1fr 1fr 0.9fr;
-            gap: 12px;
-            padding: 18px;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-card);
-            box-shadow: var(--shadow);
-            align-items: end;
-        }
-
-        .filter-group { display: grid; gap: 8px; }
-        .filter-group label {
-            color: var(--text-muted);
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-        }
-
-        .filter-group input,
-        .filter-group select,
-        .filter-toggle {
-            width: 100%;
-            min-height: 42px;
-            padding: 10px 12px;
-            border-radius: var(--radius-small);
-            border: 1px solid var(--border);
-            background: var(--bg-surface);
-            color: var(--text-primary);
-            transition: border-color 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        .filter-group input:focus,
-        .filter-group select:focus,
-        .filter-toggle:focus {
-            outline: none;
-            border-color: var(--dhl-red);
-            box-shadow: 0 0 0 3px rgba(212,5,17,0.12);
-        }
-
-        .filter-group.status-group { position: relative; }
-        .filter-toggle {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-            text-align: left;
-            cursor: pointer;
-        }
-
-        .status-options {
-            position: absolute;
-            top: calc(100% + 8px);
-            left: 0;
-            right: 0;
-            padding: 12px;
-            z-index: 15;
-            display: grid;
-            gap: 8px;
-            border-radius: var(--radius-small);
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            box-shadow: var(--shadow);
-            max-height: 260px;
-            overflow: auto;
-        }
-
-        .status-options.hidden { display: none; }
-
-        .status-button {
-            border: 1px solid var(--border);
-            border-radius: 999px;
-            background: transparent;
-            color: var(--text-primary);
-            padding: 8px 11px;
-            font-size: 11px;
-            text-transform: uppercase;
-            cursor: pointer;
-            transition: background 0.2s ease, border-color 0.2s ease;
-        }
-
-        .status-button.active {
-            background: var(--dhl-red);
-            border-color: var(--dhl-red);
-            color: white;
-        }
-
-        .period-inputs {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-
-        .filter-action {
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            min-height: 42px;
-        }
-
-        .filter-action .btn {
-            width: 100%;
-            padding: 12px 0;
-        }
-
-        .filter-status button {
-            border: 1px solid var(--border);
-            border-radius: 999px;
-            background: transparent;
-            color: var(--text-primary);
-            padding: 6px 11px;
-            font-size: 11px;
-            letter-spacing: 0.04em;
-            text-transform: uppercase;
-        }
-
-        .filter-status button.active {
-            background: var(--dhl-red);
-            border-color: var(--dhl-red);
-            color: white;
-        }
-
-        .cards {
-            display: grid;
-            grid-template-columns: repeat(4, minmax(240px, 1fr));
-            gap: 16px;
-        }
-
-        .card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-card);
-            box-shadow: var(--shadow);
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            min-height: 146px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .card.skeleton::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.08), rgba(255,255,255,0.02));
-            animation: shimmer 1.1s infinite;
-        }
-
-        @keyframes shimmer {0%{transform: translateX(-100%);}100%{transform: translateX(100%);}}
-
-        .card-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-        .card-title { font-size: 13px; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.08em; }
-        .card-value { font-size: 32px; line-height: 1; margin: 12px 0 0; font-weight: 800; }
-        .card-meta { display: flex; align-items: center; gap: 10px; color: var(--text-muted); font-size: 12px; }
-        .card-icon { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; background: rgba(255,255,255,0.06); }
-
-        .progress-row { display: flex; align-items: center; gap: 10px; margin-top: 14px; }
-        .progress-track { flex: 1; height: 10px; border-radius: 999px; background: #111111; overflow: hidden; }
-        .progress-fill { height: 100%; transition: width 0.8s ease; }
-        .progress-in { background: linear-gradient(90deg, rgba(212,5,17,0.92), rgba(239,68,68,0.9)); }
-        .progress-out { background: linear-gradient(90deg, rgba(59,130,246,0.92), rgba(37,99,235,0.9)); }
-
-        .layout { display: grid; grid-template-columns: repeat(3, minmax(320px, 1fr)); gap: 16px; }
-        .table-layout { display: grid; grid-template-columns: repeat(2, minmax(320px, 1fr)); gap: 16px; }
-        .chart-panel, .table-panel, .footer-panel { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow); overflow: hidden; }
-        .chart-panel { display: flex; flex-direction: column; }
-        .panel-head { padding: 20px 22px; border-bottom: 1px solid rgba(255,255,255,0.08); }
-        .panel-head h2 { margin: 0; font-size: 16px; }
-        .panel-head p { margin: 6px 0 0; color: var(--text-muted); font-size: 13px; }
-        .panel-body { padding: 18px; flex: 1; }
-        .panel-body canvas { width: 100% !important; height: 100% !important; }
-
-        .table-panel { display: grid; grid-template-rows: auto 1fr auto; }
-        .table-wrapper { overflow: auto; padding: 0 20px 20px; }
-        table { width: 100%; border-collapse: collapse; min-width: 780px; }
-        th, td { padding: 14px 12px; border-bottom: 1px solid rgba(255,255,255,0.06); font-size: 13px; }
-        th { position: sticky; top: 0; background: rgba(16,16,16,0.95); color: var(--text-primary); cursor: pointer; }
-        th .sort-indicator { margin-left: 8px; font-size: 10px; color: var(--text-muted); }
-        tbody tr { transition: background 0.2s ease; cursor: pointer; }
-        tbody tr:hover { background: rgba(255,255,255,0.05); }
-        .badge { display: inline-flex; align-items: center; justify-content: center; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
-        .badge-patio { background: var(--status-patio); color: #111827; }
-        .badge-doca { background: var(--status-doca); color: #EFF6FF; }
-        .badge-separado { background: var(--status-separado); color: #ECFDF5; }
-        .badge-separando { background: var(--status-separando); color: #F3E8FF; }
-        .badge-liberado { background: var(--status-liberado); color: #F9FAFB; }
-        .pagination { padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; color: var(--text-muted); }
-        .pagination button { border: 1px solid var(--border); border-radius: 8px; background: transparent; color: var(--text-primary); padding: 10px 14px; cursor: pointer; transition: background 0.2s ease; }
-        .pagination button:disabled { opacity: 0.35; cursor: not-allowed; }
-
-        .footer-panel { display: grid; grid-template-columns: repeat(2, minmax(320px, 1fr)); gap: 16px; padding: 20px; }
-        .footer-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-card); padding: 20px; }
-        .footer-card h3 { margin: 0 0 14px; font-size: 15px; }
-        .summary-row { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; padding: 14px 0; border-top: 1px solid rgba(255,255,255,0.06); }
-        .summary-row:first-child { border-top: none; }
-        .summary-row span { color: var(--text-primary); font-size: 13px; }
-        .summary-row span:nth-child(2) { color: var(--text-muted); }
-        .summary-row span:last-child { color: var(--dhl-red); font-weight: 700; }
-        .legend { display: flex; flex-wrap: wrap; gap: 12px; }
-        .legend-item { display: inline-flex; gap: 8px; align-items: center; color: var(--text-primary); font-size: 13px; }
-        .legend-dot { width: 11px; height: 11px; border-radius: 50%; display: inline-block; }
-
-        .drawer {
-            position: fixed;
-            top: 0;
-            right: 0;
-            width: min(420px, 100%);
-            height: 100vh;
-            background: var(--bg-primary);
-            border-left: 1px solid rgba(255,255,255,0.08);
-            transform: translateX(100%);
-            transition: transform 0.28s ease;
-            z-index: 40;
-            display: flex;
-            flex-direction: column;
-        }
-        .drawer.open { transform: translateX(0); }
-        .drawer-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 22px; border-bottom: 1px solid rgba(255,255,255,0.08); }
-        .drawer-header h2 { margin: 0; font-size: 17px; }
-        .drawer-body { padding: 22px; overflow-y: auto; display: grid; gap: 20px; }
-        .drawer-row strong { display: block; color: var(--text-muted); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px; }
-        .drawer-row span { color: var(--text-primary); font-size: 15px; }
-        .drawer-chart { min-height: 240px; }
-        .drawer-close { border: 1px solid var(--border); background: transparent; color: var(--text-primary); border-radius: var(--radius-small); padding: 10px 14px; cursor: pointer; }
-
-        .no-results td { text-align: center; color: var(--text-muted); padding: 24px 0; }
-
-        @media (max-width: 1200px) {
-            .filters { grid-template-columns: 1fr; }
-            .cards { grid-template-columns: 1fr 1fr; }
-            .layout { grid-template-columns: 1fr; }
-            .footer-panel { grid-template-columns: 1fr; }
-        }
-
-        @media (max-width: 720px) {
-            .topbar { flex-direction: column; align-items: stretch; height: auto; padding: 18px; }
-            .topbar-meta { justify-content: space-between; width: 100%; }
-            .header-actions { justify-content: flex-start; }
-            .cards { grid-template-columns: 1fr; }
-        }
-    </style>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+@media(max-width:1100px){.threecol{grid-template-columns:1fr 1fr}}
+@media(max-width:900px){.kpis,.twocol,.threecol,.ftgrid{grid-template-columns:1fr}.filters{grid-template-columns:1fr}}
+</style>
 </head>
 <body>
-    <main class="page">
-        <header>
-            <div class="topbar">
-                <div class="brand">
-                    <div class="brand-logo">DHL</div>
-                    <div class="brand-copy">
-                        <h1>Dashboard Operacional</h1>
-                        <p>Visão Inbound & Outbound</p>
-                    </div>
-                </div>
-                <div class="topbar-meta">
-                    <span>Última atualização <strong id="lastUpdate">--</strong></span>
-                </div>
-                <div class="header-actions">
-                    <button id="btnExport" class="btn primary">Exportar CSV</button>
-                </div>
-            </div>
-            <div class="filters">
-                <div class="filter-group filter-period">
-                    <label>Período</label>
-                    <div class="period-inputs">
-                        <input id="dateStart" type="date" />
-                        <input id="dateEnd" type="date" />
-                    </div>
-                </div>
-                <div class="filter-group status-group">
-                    <label>Status</label>
-                    <button type="button" id="statusToggle" class="filter-toggle">Selecionar status <span>▾</span></button>
-                    <div class="status-options hidden" id="statusOptions"></div>
-                </div>
-                <div class="filter-group">
-                    <label>Transportadora</label>
-                    <select id="transportFilter"></select>
-                </div>
-                <div class="filter-group">
-                    <label>Destino</label>
-                    <input id="destinoFilter" type="search" placeholder="Buscar destino" />
-                </div>
-                <div class="filter-group filter-action">
-                    <button id="btnClear" class="btn secondary">Limpar</button>
-                </div>
-            </div>
-        </header>
+<main class="page">
 
-        <section class="cards" id="kpis">
-            <article class="card" id="kpiRecords">
-                <div class="card-header">
-                    <div class="card-title">Total de Registros</div>
-                    <div class="card-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16v11H4z"/><path d="M9 7V4h6v3"/><path d="M8 13h8"/></svg></div>
-                </div>
-                <div class="card-value" data-target>0</div>
-                <div class="card-meta">Inbound + Outbound</div>
-            </article>
-            <article class="card" id="kpiTons">
-                <div class="card-header">
-                    <div class="card-title">Total de TONS</div>
-                    <div class="card-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 20h10"/><path d="M12 4v10"/><path d="M7 14a5 5 0 0 1 10 0"/></svg></div>
-                </div>
-                <div class="card-value" data-target>0</div>
-                <div class="card-meta">Soma de toneladas</div>
-            </article>
-            <article class="card" id="kpiRatioCard">
-                <div class="card-header">
-                    <div class="card-title">Inbound vs Outbound</div>
-                    <div class="card-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12h6"/><path d="M13 6h6"/><path d="M13 18h6"/></svg></div>
-                </div>
-                <div class="card-value" id="ratioValue">0 / 0</div>
-                <div class="progress-row">
-                    <div class="progress-track"><span class="progress-fill progress-in" id="barIn" style="width:50%;"></span></div>
-                    <div class="progress-track"><span class="progress-fill progress-out" id="barOut" style="width:50%;"></span></div>
-                </div>
-            </article>
-            <article class="card" id="kpiStatus">
-                <div class="card-header">
-                    <div class="card-title">Status mais crítico</div>
-                    <div class="card-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 5v14"/><path d="M5 12h14"/></svg></div>
-                </div>
-                <div class="card-value" id="criticalValue">-</div>
-                <div class="card-meta" id="criticalBadge"></div>
-            </article>
-        </section>
+<header>
+  <div class="topbar">
+    <div class="brand">
+      <div class="logo">DHL</div>
+      <div>
+        <h1>Dashboard Operacional</h1>
+        <p>Visão Inbound &amp; Outbound</p>
+      </div>
+    </div>
+    <div class="meta">Última atualização <strong id="ts">--</strong></div>
+    <button id="btnExport" class="btn btn-red">Exportar CSV</button>
+  </div>
+</header>
 
-        <section class="layout">
-            <article class="chart-panel">
-                <div class="panel-head"><h2>Volume semanal</h2><p>Inbound x Outbound por semana</p></div>
-                <div class="panel-body"><canvas id="barChart"></canvas></div>
-            </article>
-            <article class="chart-panel">
-                <div class="panel-head"><h2>TONS ao longo do tempo</h2><p>Comparativo de linhas por data</p></div>
-                <div class="panel-body"><canvas id="lineChart"></canvas></div>
-            </article>
-            <article class="chart-panel">
-                <div class="panel-head"><h2>Distribuição por status</h2><p>Clique em qualquer fatia para filtrar</p></div>
-                <div class="panel-body"><canvas id="donutChart"></canvas></div>
-            </article>
-        </section>
+<section>
+  <div class="filters">
+    <div class="fg">
+      <label>Período</label>
+      <div class="period">
+        <input id="dateStart" type="date">
+        <input id="dateEnd" type="date">
+      </div>
+    </div>
+    <div class="fg status-wrap">
+      <label>Status</label>
+      <button type="button" id="statusToggle" class="status-toggle">Selecionar status <span>▾</span></button>
+      <div id="statusDD" class="status-dropdown hidden"></div>
+    </div>
+    <div class="fg">
+      <label>Transportadora</label>
+      <select id="selTransp"></select>
+    </div>
+    <div class="fg">
+      <label>Destino</label>
+      <input id="inpDestino" type="search" placeholder="Buscar destino">
+    </div>
+    <div class="fg" style="justify-content:flex-end">
+      <label>&nbsp;</label>
+      <button id="btnClear" class="btn btn-outline">Limpar</button>
+    </div>
+  </div>
+</section>
 
-        <section class="table-layout">
-            <article class="table-panel">
-                <div class="panel-head"><h2>Tabela INBOUND</h2><p>Entradas com ordenação nativa</p></div>
-                <div class="table-wrapper">
-                    <table id="tableInbound"><thead><tr>
-                        <th data-field="data">Data<span class="sort-indicator"></span></th>
-                        <th data-field="status">Status<span class="sort-indicator"></span></th>
-                        <th data-field="tipo">Tipo<span class="sort-indicator"></span></th>
-                        <th data-field="destino">Destino<span class="sort-indicator"></span></th>
-                        <th data-field="transportadora">Transportadora<span class="sort-indicator"></span></th>
-                        <th data-field="tons">TONS<span class="sort-indicator"></span></th>
-                    </tr></thead><tbody></tbody></table>
-                </div>
-                <div class="pagination" id="paginationInbound"></div>
-            </article>
-            <article class="table-panel">
-                <div class="panel-head"><h2>Tabela OUTBOUND</h2><p>Saídas com ordenação nativa</p></div>
-                <div class="table-wrapper">
-                    <table id="tableOutbound"><thead><tr>
-                        <th data-field="data">Data<span class="sort-indicator"></span></th>
-                        <th data-field="status">Status<span class="sort-indicator"></span></th>
-                        <th data-field="tipo">Tipo<span class="sort-indicator"></span></th>
-                        <th data-field="destino">Destino<span class="sort-indicator"></span></th>
-                        <th data-field="transportadora">Transportadora<span class="sort-indicator"></span></th>
-                        <th data-field="tons">TONS<span class="sort-indicator"></span></th>
-                    </tr></thead><tbody></tbody></table>
-                </div>
-                <div class="pagination" id="paginationOutbound"></div>
-            </article>
-        </section>
+<section class="kpis" id="kpis">
+  <div class="kcard">
+    <div class="ktitle">Total de Registros</div>
+    <div class="kval" id="kTotal">0</div>
+    <div class="kmeta">Inbound + Outbound</div>
+  </div>
+  <div class="kcard">
+    <div class="ktitle">Total de TONS</div>
+    <div class="kval" id="kTons">0</div>
+    <div class="kmeta">Soma de toneladas</div>
+  </div>
+  <div class="kcard">
+    <div class="ktitle">Inbound vs Outbound</div>
+    <div class="kval" id="kRatio">0 / 0</div>
+    <div class="prow">
+      <div class="ptrack"><div class="pfill pin" id="barIn" style="width:50%"></div></div>
+      <div class="ptrack"><div class="pfill pout" id="barOut" style="width:50%"></div></div>
+    </div>
+  </div>
+  <div class="kcard">
+    <div class="ktitle">DTs Prioritárias</div>
+    <div class="kval" id="kPri" style="color:#EF4444">0</div>
+    <div class="kmeta">DTs com atenção imediata</div>
+  </div>
+</section>
 
-        <section class="footer-panel">
-            <div class="footer-card">
-                <h3>Totalizadores por transportadora</h3>
-                <div id="carrierSummary"></div>
-            </div>
-            <div class="footer-card">
-                <h3>Legendagem de status</h3>
-                <div class="legend" id="statusLegend"></div>
-            </div>
-        </section>
-    </main>
+<section class="twocol">
 
-    <aside class="drawer" id="drawerPanel" aria-hidden="true">
-        <div class="drawer-header">
-            <div>
-                <h2>Detalhes do registro</h2>
-                <p id="drawerSubtitle" style="color:var(--text-muted);font-size:13px;margin-top:4px;">Clique em uma linha para ver detalhes</p>
-            </div>
-            <button class="drawer-close" id="closeDrawer">Fechar</button>
-        </div>
-        <div class="drawer-body">
-            <div class="drawer-row"><strong>Data da operação</strong><span id="detailDate">-</span></div>
-            <div class="drawer-row"><strong>Status</strong><span id="detailStatus">-</span></div>
-            <div class="drawer-row"><strong>Tipo</strong><span id="detailType">-</span></div>
-            <div class="drawer-row"><strong>Destino</strong><span id="detailDestination">-</span></div>
-            <div class="drawer-row"><strong>Transportadora</strong><span id="detailCarrier">-</span></div>
-            <div class="drawer-row"><strong>TONS</strong><span id="detailTons">-</span></div>
-            <div class="drawer-row"><strong>Histórico de carga</strong><div class="drawer-chart"><canvas id="drawerChart"></canvas></div></div>
-        </div>
-    </aside>
+  <!-- INBOUND -->
+  <article class="tpanel">
+    <div class="thead ib">
+      <div class="thead-left">
+        <h2>Tabela INBOUND</h2>
+        <p>Entradas — clique na linha para detalhes</p>
+      </div>
+      <div class="tabsrow">
+        <button class="ptab on" data-p="ib" data-v="rec">Registros</button>
+        <button class="ptab" data-p="ib" data-v="dt">Status por DT</button>
+      </div>
+    </div>
+    <div class="vrecords" id="recIb">
+      <div class="twrap">
+        <table id="tIb">
+          <thead><tr>
+            <th data-f="data">Data<span class="si"></span></th>
+            <th data-f="status">Status<span class="si"></span></th>
+            <th data-f="pri">Prioridade<span class="si"></span></th>
+            <th data-f="destino">Destino<span class="si"></span></th>
+            <th data-f="transp">Transportadora<span class="si"></span></th>
+            <th data-f="tons">TONS<span class="si"></span></th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="pager" id="pagIb"></div>
+    </div>
+    <div class="vdt hide" id="dtIb">
+      <div class="dtfilters" id="dtfIb"></div>
+      <div class="dtlist" id="dtlIb"></div>
+      <div class="dtleg">
+        <span class="dtlegitem"><span class="dtlegdot" style="background:#EF4444"></span>Alta — Pátio/Doca/Separando</span>
+        <span class="dtlegitem"><span class="dtlegdot" style="background:#F59E0B"></span>Média — Trânsito/Separado</span>
+        <span class="dtlegitem"><span class="dtlegdot" style="background:#10B981"></span>Normal — Liberado/Outros</span>
+      </div>
+    </div>
+  </article>
 
-    <script>
-        const inboundData = [
-            { data: '01/06/2026', status: 'Separado', tipo: 'Entrada', destino: 'PORTO BELO - SC', transportadora: 'COOCATRANS S.A', tons: 5.00 },
-            { data: '02/06/2026', status: 'Separado', tipo: 'Entrada', destino: 'PORTO BELO - SC', transportadora: 'COOCATRANS S.A', tons: 4.00 },
-            { data: '03/06/2026', status: 'Separado', tipo: 'Entrada', destino: 'PORTO BELO - SC', transportadora: 'COOCATRANS S.A', tons: 6.00 },
-            { data: '07/06/2026', status: 'Doca', tipo: 'Entrada', destino: 'FOZ DO IGUAÇU - PR', transportadora: 'BBT TRANSPORTES LTDA', tons: 7.00 },
-            { data: '08/06/2026', status: 'Doca', tipo: 'Entrada', destino: 'FOZ DO IGUAÇU - PR', transportadora: 'BBT TRANSPORTES LTDA', tons: 3.00 },
-            { data: '09/06/2026', status: 'Doca', tipo: 'Entrada', destino: 'FOZ DO IGUAÇU - PR', transportadora: 'BBT TRANSPORTES LTDA', tons: 4.00 },
-            { data: '19/06/2026', status: 'Pátio', tipo: 'Entrada', destino: 'ICARA - SC', transportadora: 'MEATIMPEX LOGISTICA LTDA', tons: 12.00 },
-            { data: '20/06/2026', status: 'Pátio', tipo: 'Entrada', destino: 'ICARA - SC', transportadora: 'MEATIMPEX LOGISTICA LTDA', tons: 6.00 },
-            { data: '21/06/2026', status: 'Pátio', tipo: 'Entrada', destino: 'ICARA - SC', transportadora: 'MEATIMPEX LOGISTICA LTDA', tons: 7.00 },
-            { data: '04/07/2026', status: 'Separando', tipo: 'Entrada', destino: 'PORTO BELO - SC', transportadora: 'COOCATRANS S.A', tons: 5.00 },
-            { data: '05/07/2026', status: 'Separando', tipo: 'Entrada', destino: 'PORTO BELO - SC', transportadora: 'COOCATRANS S.A', tons: 4.00 },
-            { data: '06/07/2026', status: 'Separando', tipo: 'Entrada', destino: 'PORTO BELO - SC', transportadora: 'COOCATRANS S.A', tons: 6.00 }
-        ];
+  <!-- OUTBOUND -->
+  <article class="tpanel">
+    <div class="thead ob">
+      <div class="thead-left">
+        <h2>Tabela OUTBOUND</h2>
+        <p>Saídas — clique na linha para detalhes</p>
+      </div>
+      <div class="tabsrow">
+        <button class="ptab on" data-p="ob" data-v="rec">Registros</button>
+        <button class="ptab" data-p="ob" data-v="dt">Status por DT</button>
+      </div>
+    </div>
+    <div class="vrecords" id="recOb">
+      <div class="twrap">
+        <table id="tOb">
+          <thead><tr>
+            <th data-f="data">Data<span class="si"></span></th>
+            <th data-f="status">Status<span class="si"></span></th>
+            <th data-f="pri">Prioridade<span class="si"></span></th>
+            <th data-f="destino">Destino<span class="si"></span></th>
+            <th data-f="transp">Transportadora<span class="si"></span></th>
+            <th data-f="tons">TONS<span class="si"></span></th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="pager" id="pagOb"></div>
+    </div>
+    <div class="vdt hide" id="dtOb">
+      <div class="dtfilters" id="dtfOb"></div>
+      <div class="dtlist" id="dtlOb"></div>
+      <div class="dtleg">
+        <span class="dtlegitem"><span class="dtlegdot" style="background:#EF4444"></span>Alta — Pátio/Doca/Separando</span>
+        <span class="dtlegitem"><span class="dtlegdot" style="background:#F59E0B"></span>Média — Trânsito/Separado</span>
+        <span class="dtlegitem"><span class="dtlegdot" style="background:#10B981"></span>Normal — Liberado/Outros</span>
+      </div>
+    </div>
+  </article>
 
-        const outboundData = inboundData.map(item => {
-            const [day, month, year] = item.data.split('/').map(Number);
-            const date = new Date(year, month - 1, day + 3);
-            const pad = num => String(num).padStart(2, '0');
-            const statusMap = { 'Separado': 'Separando', 'Doca': 'Liberado', 'Pátio': 'Doca', 'Separando': 'Separado', 'Liberado': 'Pátio' };
-            return {
-                data: `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()}`,
-                status: statusMap[item.status] || item.status,
-                tipo: 'Saída',
-                destino: item.destino,
-                transportadora: item.transportadora,
-                tons: item.tons
-            };
+</section>
+
+<section class="threecol">
+  <article class="cpanel">
+    <div class="chead"><h2>Volume semanal</h2><p>Inbound × Outbound por semana</p></div>
+    <div class="cbody"><canvas id="barChart"></canvas></div>
+  </article>
+  <article class="cpanel">
+    <div class="chead"><h2>TONS ao longo do tempo</h2><p>Comparativo por data</p></div>
+    <div class="cbody"><canvas id="lineChart"></canvas></div>
+  </article>
+  <article class="cpanel">
+    <div class="chead"><h2>Distribuição por status</h2><p>Clique numa fatia para filtrar</p></div>
+    <div class="cbody"><canvas id="donutChart"></canvas></div>
+  </article>
+</section>
+
+<section class="ftgrid">
+  <div class="ftcard"><h3>Totalizadores por transportadora</h3><div id="ftCarrier"></div></div>
+  <div class="ftcard"><h3>Legendagem de status</h3><div class="legwrap" id="ftLegend"></div></div>
+</section>
+
+</main>
+
+<!-- DRAWER -->
+<aside class="drawer" id="drawer" aria-hidden="true">
+  <div class="drhead">
+    <div>
+      <h2>Detalhes do registro</h2>
+      <p id="drSub" style="color:var(--muted);font-size:13px;margin-top:4px">—</p>
+    </div>
+    <button class="drclose" id="btnCloseDrawer">Fechar ✕</button>
+  </div>
+  <div class="drbody">
+    <div class="drrow"><strong>Data</strong><span id="drDate">-</span></div>
+    <div class="drrow"><strong>Status</strong><span id="drStatus">-</span></div>
+    <div class="drrow"><strong>Prioridade</strong><span id="drPri">-</span></div>
+    <div class="drrow"><strong>Tipo</strong><span id="drType">-</span></div>
+    <div class="drrow"><strong>Destino</strong><span id="drDest">-</span></div>
+    <div class="drrow"><strong>Transportadora</strong><span id="drTransp">-</span></div>
+    <div class="drrow"><strong>TONS</strong><span id="drTons">-</span></div>
+    <div class="drrow"><strong>Histórico da transportadora</strong><div class="drchart"><canvas id="drChart"></canvas></div></div>
+  </div>
+</aside>
+
+<script>
+// ── CONFIG ──────────────────────────────────────────────
+const SCOL = {
+    'Pátio':'#F59E0B','Doca':'#3B82F6','Separado':'#10B981',
+    'Separando':'#8B5CF6','Liberado':'#22D3EE','Trânsito':'#F97316',
+    'Descarregado':'#EC4899','Carregando':'#A3E635'
+};
+const PMAP = {
+    'Pátio':'high','Doca':'high','Separando':'high',
+    'Trânsito':'med','Separado':'med',
+    'Descarregado':'low','Liberado':'low','Carregando':'low'
+};
+const PLBL = {high:'🔴 Alta',med:'🟡 Média',low:'🟢 Normal'};
+const PORD = {high:0,med:1,low:2};
+const PER_PAGE = 10;
+
+// ── SAMPLE DATA ─────────────────────────────────────────
+const SAMPLE = [
+    {data:'02/06/2026',status:'Separado', tipo:'Entrada',destino:'PORTO BELO - SC',      transp:'COOCATRANS S.A',          tons:4},
+    {data:'07/06/2026',status:'Doca',     tipo:'Entrada',destino:'FOZ DO IGUAÇU - PR',   transp:'BBT TRANSPORTES LTDA',    tons:7},
+    {data:'09/06/2026',status:'Doca',     tipo:'Entrada',destino:'FOZ DO IGUAÇU - PR',   transp:'BBT TRANSPORTES LTDA',    tons:4},
+    {data:'13/06/2026',status:'Trânsito', tipo:'Entrada',destino:'CURITIBA - PR',         transp:'TRANSP EXEMPLO',          tons:10},
+    {data:'19/06/2026',status:'Pátio',    tipo:'Entrada',destino:'ICARA - SC',            transp:'MEATIMPEX LOGISTICA LTDA',tons:12},
+    {data:'21/06/2026',status:'Pátio',    tipo:'Entrada',destino:'ICARA - SC',            transp:'MEATIMPEX LOGISTICA LTDA',tons:7},
+    {data:'25/06/2026',status:'Liberado', tipo:'Entrada',destino:'CASCAVEL - PR',         transp:'TRANSP RÁPIDO',           tons:11},
+    {data:'04/07/2026',status:'Separando',tipo:'Entrada',destino:'PORTO BELO - SC',       transp:'COOCATRANS S.A',          tons:5},
+    {data:'06/07/2026',status:'Separando',tipo:'Entrada',destino:'PORTO BELO - SC',       transp:'COOCATRANS S.A',          tons:6},
+    {data:'04/06/2026',status:'Separando',tipo:'Saída',  destino:'PORTO BELO - SC',       transp:'COOCATRANS S.A',          tons:5},
+    {data:'10/06/2026',status:'Doca',     tipo:'Saída',  destino:'FOZ DO IGUAÇU - PR',   transp:'BBT TRANSPORTES LTDA',    tons:7},
+    {data:'12/06/2026',status:'Liberado', tipo:'Saída',  destino:'FOZ DO IGUAÇU - PR',   transp:'BBT TRANSPORTES LTDA',    tons:4},
+    {data:'16/06/2026',status:'Trânsito', tipo:'Saída',  destino:'CURITIBA - PR',         transp:'TRANSP EXEMPLO',          tons:10},
+    {data:'22/06/2026',status:'Pátio',    tipo:'Saída',  destino:'ICARA - SC',            transp:'MEATIMPEX LOGISTICA LTDA',tons:12},
+    {data:'24/06/2026',status:'Doca',     tipo:'Saída',  destino:'ICARA - SC',            transp:'MEATIMPEX LOGISTICA LTDA',tons:7},
+    {data:'28/06/2026',status:'Liberado', tipo:'Saída',  destino:'CASCAVEL - PR',         transp:'TRANSP RÁPIDO',           tons:9},
+    {data:'01/07/2026',status:'Separado', tipo:'Saída',  destino:'PORTO BELO - SC',       transp:'COOCATRANS S.A',          tons:5},
+    {data:'03/07/2026',status:'Separado', tipo:'Saída',  destino:'PORTO BELO - SC',       transp:'COOCATRANS S.A',          tons:6},
+    {data:'15/06/2026',status:'Trânsito', tipo:'Entrada',destino:'CURITIBA - PR',         transp:'TRANSP EXEMPLO',          tons:9},
+    {data:'18/06/2026',status:'Pátio',    tipo:'Saída',  destino:'LONDRINA - PR',         transp:'RODOVIÁRIO NORTE',        tons:8},
+    {data:'27/06/2026',status:'Separando',tipo:'Entrada',destino:'BLUMENAU - SC',         transp:'SUL EXPRESS',             tons:6},
+    {data:'30/06/2026',status:'Doca',     tipo:'Saída',  destino:'MARINGÁ - PR',          transp:'PARANÁ CARGAS',           tons:11},
+    {data:'02/07/2026',status:'Liberado', tipo:'Entrada',destino:'JOINVILLE - SC',        transp:'SANTA LOGÍSTICA',         tons:7},
+    {data:'05/07/2026',status:'Separado', tipo:'Saída',  destino:'CHAPECÓ - SC',          transp:'OESTE TRANSPORTES',       tons:5}
+];
+
+// ── STATE ───────────────────────────────────────────────
+let DATA = [];
+let barCh, lineCh, donutCh, drCh;
+
+const S = {
+    dateStart:'', dateEnd:'', statuses:new Set(),
+    transp:'', destino:'',
+    sort:{ ib:{f:'data',asc:false}, ob:{f:'data',asc:false} },
+    page:{ ib:1, ob:1 },
+    view:{ ib:'rec', ob:'rec' },
+    dtf:{ ib:'all', ob:'all' }
+};
+
+// ── HELPERS ─────────────────────────────────────────────
+function parseDate(v) {
+    if (!v) return null;
+    var p = v.split('/');
+    return new Date(+p[2], +p[1]-1, +p[0]);
+}
+function lo(t) { return (t||'').toString().trim().toLowerCase(); }
+function col(s) { return SCOL[s] || '#888'; }
+function pri(s) { return PMAP[s] || 'low'; }
+function allStatuses() {
+    return [...new Set(DATA.map(function(r){return r.status}).filter(Boolean))].sort();
+}
+function debounce(fn, ms) {
+    var t;
+    return function() {
+        var args = arguments;
+        clearTimeout(t);
+        t = setTimeout(function(){ fn.apply(null,args); }, ms);
+    };
+}
+function animNum(el, target) {
+    var t0 = performance.now(), dur = 700;
+    function tick(now) {
+        var p = Math.min((now-t0)/dur, 1);
+        el.textContent = Math.floor(p*target).toLocaleString('pt-BR');
+        if (p < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+}
+function mkBadge(status) {
+    var el = document.createElement('span');
+    var key = lo(status).normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    el.className = 'badge b-' + key;
+    el.textContent = status;
+    return el;
+}
+function mkPri(status) {
+    var p = pri(status);
+    var el = document.createElement('span');
+    el.className = 'bpri ' + p;
+    el.textContent = PLBL[p];
+    return el;
+}
+
+// ── FILTER ──────────────────────────────────────────────
+function visible(r) {
+    if (S.dateStart) {
+        var start = new Date(S.dateStart);
+        if (parseDate(r.data) < start) return false;
+    }
+    if (S.dateEnd) {
+        var end = new Date(S.dateEnd);
+        if (parseDate(r.data) > end) return false;
+    }
+    if (S.statuses.size && !S.statuses.has(r.status)) return false;
+    if (S.transp && r.transp !== S.transp) return false;
+    if (S.destino && !lo(r.destino).includes(lo(S.destino))) return false;
+    return true;
+}
+function filtered() { return DATA.filter(visible); }
+function ibData() { return filtered().filter(function(r){ return lo(r.tipo).includes('entrada'); }); }
+function obData() { return filtered().filter(function(r){ return lo(r.tipo).includes('sa'); }); }
+
+// ── KPIs ────────────────────────────────────────────────
+function renderKpis() {
+    var ib = ibData(), ob = obData(), all = filtered();
+    var tot = all.length;
+    var tons = all.reduce(function(s,r){ return s + (+r.tons||0); }, 0);
+    var priCount = all.filter(function(r){ return pri(r.status)==='high'; }).length;
+    animNum(document.getElementById('kTotal'), tot);
+    animNum(document.getElementById('kTons'), Math.round(tons));
+    document.getElementById('kRatio').textContent = ib.length + ' / ' + ob.length;
+    document.getElementById('barIn').style.width  = tot ? Math.round(ib.length/tot*100)+'%' : '50%';
+    document.getElementById('barOut').style.width = tot ? Math.round(ob.length/tot*100)+'%' : '50%';
+    animNum(document.getElementById('kPri'), priCount);
+}
+
+// ── STATUS BUTTONS ───────────────────────────────────────
+function renderStatusDD() {
+    var c = document.getElementById('statusDD');
+    c.innerHTML = '';
+    allStatuses().forEach(function(s) {
+        var b = document.createElement('button');
+        b.className = 'sbtn' + (S.statuses.size===0||S.statuses.has(s)?' on':'');
+        b.textContent = s;
+        b.addEventListener('click', function() {
+            if (S.statuses.has(s)) S.statuses.delete(s);
+            else S.statuses.add(s);
+            S.page.ib = S.page.ob = 1;
+            render();
         });
+        c.appendChild(b);
+    });
+}
 
-        const statusColors = {
-            'Pátio': '#F59E0B',
-            'Doca': '#3B82F6',
-            'Separado': '#10B981',
-            'Separando': '#8B5CF6',
-            'Liberado': '#6B7280'
-        };
+// ── TRANSP SELECT ────────────────────────────────────────
+function renderTranspSel() {
+    var sel = document.getElementById('selTransp');
+    var cur = sel.value || S.transp;
+    var list = [...new Set(DATA.map(function(r){return r.transp}).filter(Boolean))].sort();
+    sel.innerHTML = '<option value="">Todas as transportadoras</option>';
+    list.forEach(function(t) {
+        var o = document.createElement('option');
+        o.value = t; o.textContent = t;
+        sel.appendChild(o);
+    });
+    sel.value = cur;
+}
 
-        const statusKeys = Object.keys(statusColors);
-        const rowsPerPage = 10;
-        let barChart, lineChart, donutChart, drawerChart;
+// ── DT VIEW ─────────────────────────────────────────────
+function buildDT(data) {
+    var byDate = {};
+    data.forEach(function(r) {
+        if (!byDate[r.data]) byDate[r.data] = [];
+        byDate[r.data].push(r);
+    });
+    var list = Object.keys(byDate).map(function(date) {
+        var recs = byDate[date];
+        var statuses = [...new Set(recs.map(function(r){return r.status}))];
+        var tons = recs.reduce(function(s,r){return s+(+r.tons||0);},0);
+        var pris = statuses.map(pri);
+        var p = pris.indexOf('high')>=0?'high':pris.indexOf('med')>=0?'med':'low';
+        return { date:date, recs:recs, statuses:statuses, tons:tons, p:p };
+    });
+    list.sort(function(a,b){
+        if (PORD[a.p] !== PORD[b.p]) return PORD[a.p]-PORD[b.p];
+        return parseDate(b.date)-parseDate(a.date);
+    });
+    return list;
+}
 
-        const state = {
-            dateStart: '',
-            dateEnd: '',
-            statuses: new Set(statusKeys),
-            transportadora: '',
-            destino: '',
-            sort: { inbound: { field: 'data', asc: false }, outbound: { field: 'data', asc: false } },
-            page: { inbound: 1, outbound: 1 }
-        };
+function renderDT(data, filtId, listId, panel) {
+    var filterEl = document.getElementById(filtId);
+    var listEl   = document.getElementById(listId);
+    var cur = S.dtf[panel];
 
-        const parseDDMMYYYY = value => {
-            if (!value) return null;
-            const [d, m, y] = value.split('/').map(Number);
-            return new Date(y, m - 1, d);
-        };
-
-        const normalize = text => (text || '').toString().trim().toLowerCase();
-
-        const getStorageKey = () => 'dhl-dashboard-filters-v1';
-        const saveState = () => {
-            localStorage.setItem(getStorageKey(), JSON.stringify({
-                dateStart: state.dateStart,
-                dateEnd: state.dateEnd,
-                statuses: Array.from(state.statuses),
-                transportadora: state.transportadora,
-                destino: state.destino
-            }));
-        };
-
-        const loadState = () => {
-            try {
-                const stored = JSON.parse(localStorage.getItem(getStorageKey()) || '{}');
-                if (stored.dateStart) state.dateStart = stored.dateStart;
-                if (stored.dateEnd) state.dateEnd = stored.dateEnd;
-                if (Array.isArray(stored.statuses) && stored.statuses.length) state.statuses = new Set(stored.statuses);
-                if (stored.transportadora) state.transportadora = stored.transportadora;
-                if (stored.destino) state.destino = stored.destino;
-            } catch (error) {
-                console.warn('Não foi possível carregar filtros:', error);
-            }
-        };
-
-        const getAllData = () => inboundData.concat(outboundData);
-        const isVisible = record => {
-            const start = state.dateStart ? new Date(state.dateStart) : null;
-            const end = state.dateEnd ? new Date(state.dateEnd) : null;
-            const recordDate = parseDDMMYYYY(record.data);
-            if (start && recordDate < start) return false;
-            if (end && recordDate > end) return false;
-            if (!state.statuses.has(record.status)) return false;
-            if (state.transportadora && record.transportadora !== state.transportadora) return false;
-            if (state.destino && !normalize(record.destino).includes(normalize(state.destino))) return false;
-            return true;
-        };
-
-        const filterData = data => data.filter(isVisible);
-        const sortData = (data, field, asc) => data.slice().sort((a, b) => {
-            if (field === 'data') {
-                return asc ? parseDDMMYYYY(a.data) - parseDDMMYYYY(b.data) : parseDDMMYYYY(b.data) - parseDDMMYYYY(a.data);
-            }
-            if (field === 'tons') return asc ? a.tons - b.tons : b.tons - a.tons;
-            return asc ? normalize(a[field]).localeCompare(normalize(b[field]), 'pt-BR', { numeric: true }) : normalize(b[field]).localeCompare(normalize(a[field]), 'pt-BR', { numeric: true });
+    // filter buttons
+    filterEl.innerHTML = '';
+    ['all','high','med','low'].forEach(function(f) {
+        var b = document.createElement('button');
+        b.className = 'dtfbtn' + (cur===f?' on':'');
+        b.textContent = f==='all'?'Todas':f==='high'?'🔴 Alta':f==='med'?'🟡 Média':'🟢 Normal';
+        b.addEventListener('click', function() {
+            S.dtf[panel] = f;
+            renderDT(data, filtId, listId, panel);
         });
+        filterEl.appendChild(b);
+    });
 
-        const animateNumber = (element, target, suffix = '') => {
-            const start = 0;
-            const duration = 800;
-            const beginning = start;
-            const startTime = performance.now();
-            const tick = now => {
-                const progress = Math.min((now - startTime) / duration, 1);
-                const value = Math.floor(beginning + (target - beginning) * progress);
-                element.textContent = `${value.toLocaleString('pt-BR')}${suffix}`;
-                if (progress < 1) requestAnimationFrame(tick);
-            };
-            requestAnimationFrame(tick);
-        };
+    var dts = buildDT(data);
+    if (cur !== 'all') dts = dts.filter(function(d){return d.p===cur;});
 
-        const createBadge = status => {
-            const badge = document.createElement('span');
-            const key = status.toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '');
-            badge.className = `badge badge-${key}`;
-            badge.textContent = status;
-            return badge;
-        };
+    if (!dts.length) {
+        listEl.innerHTML = '<div class="dtempty">Nenhuma DT encontrada.</div>';
+        return;
+    }
 
-        const updateTimestamp = () => {
-            document.getElementById('lastUpdate').textContent = new Date().toLocaleString('pt-BR', { hour12: false });
-        };
+    listEl.innerHTML = '';
+    dts.forEach(function(dt) {
+        var row = document.createElement('div');
+        row.className = 'dtrow ' + dt.p;
+        row.innerHTML =
+            '<span class="dtdate">📅 ' + dt.date + '</span>' +
+            '<div class="dtstatuses">' +
+                dt.statuses.map(function(s){ return mkBadge(s).outerHTML; }).join('') +
+            '</div>' +
+            '<span class="dttons">' + dt.tons.toFixed(1) + ' TONS</span>' +
+            '<span class="dtreg">' + dt.recs.length + ' reg.</span>' +
+            '<span>' + mkPri(dt.statuses[0]).outerHTML + '</span>';
+        listEl.appendChild(row);
+    });
+}
 
-        const renderStatusButtons = () => {
-            const container = document.getElementById('statusOptions');
-            container.innerHTML = '';
-            statusKeys.forEach(status => {
-                const button = document.createElement('button');
-                button.type = 'button';
-                button.className = 'status-button';
-                button.textContent = status;
-                if (state.statuses.has(status)) button.classList.add('active');
-                button.addEventListener('click', () => {
-                    if (state.statuses.has(status)) state.statuses.delete(status);
-                    else state.statuses.add(status);
-                    if (!state.statuses.size) state.statuses = new Set(statusKeys);
-                    state.page.inbound = 1;
-                    state.page.outbound = 1;
-                    render();
-                });
-                container.appendChild(button);
-            });
-        };
+// ── TABLES ──────────────────────────────────────────────
+function sortRows(data, f, asc) {
+    return data.slice().sort(function(a,b) {
+        if (f==='data') {
+            var da = parseDate(a.data), db = parseDate(b.data);
+            return asc ? da-db : db-da;
+        }
+        if (f==='tons') return asc ? a.tons-b.tons : b.tons-a.tons;
+        if (f==='pri') {
+            var pa = PORD[pri(a.status)], pb = PORD[pri(b.status)];
+            return asc ? pa-pb : pb-pa;
+        }
+        var map = {status:'status',destino:'destino',transp:'transp'};
+        var key = map[f] || f;
+        var va = lo(a[key]), vb = lo(b[key]);
+        return asc ? va.localeCompare(vb,'pt-BR') : vb.localeCompare(va,'pt-BR');
+    });
+}
 
-        const toggleStatusDropdown = () => {
-            const options = document.getElementById('statusOptions');
-            options.classList.toggle('hidden');
-        };
+function renderTable(data, tableId, pagId, panel) {
+    var tbody = document.querySelector('#'+tableId+' tbody');
+    var srt = S.sort[panel];
+    var sorted = sortRows(data, srt.f, srt.asc);
+    var page = S.page[panel];
+    var total = Math.max(1, Math.ceil(sorted.length / PER_PAGE));
+    var rows = sorted.slice((page-1)*PER_PAGE, page*PER_PAGE);
 
-        const closeStatusDropdown = () => {
-            document.getElementById('statusOptions').classList.add('hidden');
-        };
+    tbody.innerHTML = '';
+    if (!rows.length) {
+        tbody.innerHTML = '<tr class="nodata"><td colspan="6">Nenhum registro encontrado</td></tr>';
+    } else {
+        rows.forEach(function(r) {
+            var tr = document.createElement('tr');
+            tr.innerHTML =
+                '<td>' + (r.data||'-') + '</td>' +
+                '<td>' + mkBadge(r.status).outerHTML + '</td>' +
+                '<td>' + mkPri(r.status).outerHTML + '</td>' +
+                '<td>' + (r.destino||'-') + '</td>' +
+                '<td>' + (r.transp||'-') + '</td>' +
+                '<td>' + (+r.tons||0).toFixed(2) + '</td>';
+            tr.style.cursor = 'pointer';
+            tr.addEventListener('click', function() { openDrawer(r); });
+            tbody.appendChild(tr);
+        });
+    }
 
-        const renderTransportFilter = () => {
-            const select = document.getElementById('transportFilter');
-            const transportadoras = Array.from(new Set(getAllData().map(item => item.transportadora))).sort((a, b) => a.localeCompare(b, 'pt-BR'));
-            select.innerHTML = '<option value="">Todas as transportadoras</option>' + transportadoras.map(name => `<option value="${name}">${name}</option>`).join('');
-            select.value = state.transportadora;
-        };
+    // sort indicators
+    document.querySelectorAll('#'+tableId+' th').forEach(function(th) {
+        var si = th.querySelector('.si');
+        if (si) si.textContent = (srt.f===th.dataset.f) ? (srt.asc?' ▲':' ▼') : '';
+    });
 
-        const renderKpis = () => {
-            document.querySelectorAll('#kpis .card').forEach(card => card.classList.add('skeleton'));
-            const inbound = filterData(inboundData);
-            const outbound = filterData(outboundData);
-            const combined = inbound.concat(outbound);
-            const total = combined.length;
-            const tons = combined.reduce((sum, row) => sum + row.tons, 0);
-            const statusCount = combined.reduce((acc, row) => { acc[row.status] = (acc[row.status] || 0) + 1; return acc; }, {});
-            const critical = statusKeys.reduce((best, status) => !best || (statusCount[status] || 0) > (statusCount[best] || 0) ? status : best, statusKeys[0]);
-            setTimeout(() => {
-                animateNumber(document.querySelector('#kpiRecords [data-target]'), total);
-                animateNumber(document.querySelector('#kpiTons [data-target]'), Math.round(tons));
-                document.getElementById('ratioValue').textContent = `${inbound.length} / ${outbound.length}`;
-                document.getElementById('barIn').style.width = total ? `${Math.round((inbound.length / total) * 100)}%` : '50%';
-                document.getElementById('barOut').style.width = total ? `${Math.round((outbound.length / total) * 100)}%` : '50%';
-                document.getElementById('criticalValue').textContent = critical || '-';
-                const criticalBadge = document.getElementById('criticalBadge');
-                criticalBadge.innerHTML = '';
-                if (critical) criticalBadge.appendChild(createBadge(critical));
-                document.querySelectorAll('#kpis .card').forEach(card => card.classList.remove('skeleton'));
-            }, 120);
-        };
+    // pager
+    var pag = document.getElementById(pagId);
+    pag.innerHTML = '';
+    var prev = document.createElement('button');
+    prev.textContent = '← Anterior';
+    if (page===1) prev.disabled = true;
+    prev.addEventListener('click', function() { S.page[panel]--; render(); });
+    var info = document.createElement('span');
+    info.textContent = page + ' / ' + total;
+    var next = document.createElement('button');
+    next.textContent = 'Próximo →';
+    if (page===total) next.disabled = true;
+    next.addEventListener('click', function() { S.page[panel]++; render(); });
+    pag.appendChild(prev);
+    pag.appendChild(info);
+    pag.appendChild(next);
+}
 
-        const getWeeklyData = combined => {
-            const buckets = {};
-            combined.forEach(row => {
-                const date = parseDDMMYYYY(row.data);
-                const week = `${date.getFullYear()} W${Math.ceil((date.getDate() + 6 - date.getDay()) / 7)}`;
-                if (!buckets[week]) buckets[week] = { inbound: 0, outbound: 0 };
-                if (row.tipo === 'Entrada') buckets[week].inbound += row.tons;
-                else buckets[week].outbound += row.tons;
-            });
-            const labels = Object.keys(buckets).sort((a, b) => a.localeCompare(b, 'pt-BR', { numeric: true }));
-            return { labels, buckets };
-        };
+function renderTables() {
+    renderTable(ibData(), 'tIb', 'pagIb', 'ib');
+    renderTable(obData(), 'tOb', 'pagOb', 'ob');
+    // refresh DT view if active
+    if (S.view.ib==='dt') renderDT(ibData(),'dtfIb','dtlIb','ib');
+    if (S.view.ob==='dt') renderDT(obData(),'dtfOb','dtlOb','ob');
+}
 
-        const renderCharts = () => {
-            const combined = getAllData().filter(isVisible);
-            const { labels: weekLabels, buckets } = getWeeklyData(combined);
-            const inboundSeries = weekLabels.map(label => buckets[label].inbound || 0);
-            const outboundSeries = weekLabels.map(label => buckets[label].outbound || 0);
-            const dailyMap = {};
-            combined.forEach(row => {
-                if (!dailyMap[row.data]) dailyMap[row.data] = { inbound: 0, outbound: 0 };
-                if (row.tipo === 'Entrada') dailyMap[row.data].inbound += row.tons;
-                else dailyMap[row.data].outbound += row.tons;
-            });
-            const dailyLabels = Object.keys(dailyMap).sort((a,b) => parseDDMMYYYY(a) - parseDDMMYYYY(b));
-            const dailyInbound = dailyLabels.map(label => dailyMap[label].inbound || 0);
-            const dailyOutbound = dailyLabels.map(label => dailyMap[label].outbound || 0);
-            const statusCounts = statusKeys.map(key => combined.filter(row => row.status === key).length);
-            const chartOptions = {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    tooltip: {
-                        backgroundColor: '#0D0D0D',
-                        borderColor: 'rgba(212,5,17,0.9)',
-                        borderWidth: 1,
-                        titleColor: '#fff',
-                        bodyColor: '#F0F0F0',
-                        padding: 12,
-                        displayColors: false,
-                        callbacks: { label: ctx => `${ctx.label}: ${ctx.formattedValue}` }
-                    },
-                    legend: { labels: { color: '#F0F0F0' } }
+// ── TAB SWITCH ───────────────────────────────────────────
+function switchTab(panel, view) {
+    S.view[panel] = view;
+    var recEl = document.getElementById('rec'+panel.charAt(0).toUpperCase()+panel.slice(1));
+    var dtEl  = document.getElementById('dt' +panel.charAt(0).toUpperCase()+panel.slice(1));
+    recEl.classList.toggle('hide', view!=='rec');
+    dtEl.classList.toggle('hide',  view!=='dt');
+    document.querySelectorAll('.ptab[data-p="'+panel+'"]').forEach(function(t) {
+        t.classList.toggle('on', t.dataset.v===view);
+    });
+    if (view==='dt') {
+        var data = panel==='ib' ? ibData() : obData();
+        renderDT(data, 'dtf'+panel.toUpperCase(), 'dtl'+panel.toUpperCase(), panel);
+    }
+}
+
+// ── CHARTS ──────────────────────────────────────────────
+function chartOpts(extra) {
+    var base = {
+        responsive:true, maintainAspectRatio:false,
+        plugins:{
+            tooltip:{backgroundColor:'#111',borderColor:'rgba(212,5,17,.8)',borderWidth:1,titleColor:'#fff',bodyColor:'#ddd',padding:11},
+            legend:{labels:{color:'#999',boxWidth:12}}
+        },
+        scales:{
+            x:{ticks:{color:'#555'},grid:{color:'rgba(255,255,255,.04)'}},
+            y:{ticks:{color:'#555'},grid:{color:'rgba(255,255,255,.04)'}}
+        }
+    };
+    if (extra) Object.assign(base, extra);
+    return base;
+}
+
+function renderCharts() {
+    var all = filtered();
+    var sKeys = allStatuses();
+
+    // weekly
+    var wk = {};
+    all.forEach(function(r) {
+        var d = parseDate(r.data);
+        if (!d) return;
+        var w = d.getFullYear()+' W'+Math.ceil((d.getDate()+6-d.getDay())/7);
+        if (!wk[w]) wk[w] = {i:0,o:0};
+        if (lo(r.tipo).includes('entrada')) wk[w].i += +r.tons||0;
+        else wk[w].o += +r.tons||0;
+    });
+    var wL = Object.keys(wk).sort();
+
+    // daily
+    var dy = {};
+    all.forEach(function(r) {
+        if (!dy[r.data]) dy[r.data] = {i:0,o:0};
+        if (lo(r.tipo).includes('entrada')) dy[r.data].i += +r.tons||0;
+        else dy[r.data].o += +r.tons||0;
+    });
+    var dL = Object.keys(dy).sort(function(a,b){return parseDate(a)-parseDate(b);});
+
+    var sc = sKeys.map(function(k){ return all.filter(function(r){return r.status===k;}).length; });
+
+    // bar
+    if (barCh) {
+        barCh.data.labels = wL;
+        barCh.data.datasets[0].data = wL.map(function(l){return wk[l].i;});
+        barCh.data.datasets[1].data = wL.map(function(l){return wk[l].o;});
+        barCh.update();
+    } else {
+        barCh = new Chart(document.getElementById('barChart'), {
+            type:'bar',
+            data:{labels:wL,datasets:[
+                {label:'Inbound', data:wL.map(function(l){return wk[l].i;}),backgroundColor:'rgba(212,5,17,.85)',borderRadius:8,maxBarThickness:28},
+                {label:'Outbound',data:wL.map(function(l){return wk[l].o;}),backgroundColor:'rgba(59,130,246,.85)',borderRadius:8,maxBarThickness:28}
+            ]},
+            options:chartOpts({interaction:{mode:'index',intersect:false}})
+        });
+    }
+
+    // line
+    if (lineCh) {
+        lineCh.data.labels = dL;
+        lineCh.data.datasets[0].data = dL.map(function(l){return dy[l].i;});
+        lineCh.data.datasets[1].data = dL.map(function(l){return dy[l].o;});
+        lineCh.update();
+    } else {
+        lineCh = new Chart(document.getElementById('lineChart'), {
+            type:'line',
+            data:{labels:dL,datasets:[
+                {label:'Inbound', data:dL.map(function(l){return dy[l].i;}),borderColor:'#D40511',backgroundColor:'rgba(212,5,17,.15)',fill:true,tension:.3,pointRadius:3},
+                {label:'Outbound',data:dL.map(function(l){return dy[l].o;}),borderColor:'#3B82F6',backgroundColor:'rgba(59,130,246,.15)',fill:true,tension:.3,pointRadius:3}
+            ]},
+            options:chartOpts({interaction:{mode:'index',intersect:false}})
+        });
+    }
+
+    // donut
+    var dColors = sKeys.map(col);
+    if (donutCh) {
+        donutCh.data.labels = sKeys;
+        donutCh.data.datasets[0].data = sc;
+        donutCh.data.datasets[0].backgroundColor = dColors;
+        donutCh.update();
+    } else {
+        donutCh = new Chart(document.getElementById('donutChart'), {
+            type:'doughnut',
+            data:{labels:sKeys,datasets:[{data:sc,backgroundColor:dColors,borderColor:'#0B0B0B',borderWidth:2}]},
+            options:{
+                responsive:true, maintainAspectRatio:false,
+                plugins:{
+                    tooltip:{backgroundColor:'#111',borderColor:'rgba(212,5,17,.8)',borderWidth:1,titleColor:'#fff',bodyColor:'#ddd',padding:11},
+                    legend:{display:true,position:'bottom',labels:{color:'#999',boxWidth:12}}
                 },
-                scales: {
-                    x: { ticks: { color: '#B8B8B8' }, grid: { color: 'rgba(255,255,255,0.06)' } },
-                    y: { ticks: { color: '#B8B8B8' }, grid: { color: 'rgba(255,255,255,0.06)' } }
-                }
-            };
-            if (barChart) {
-                barChart.data.labels = weekLabels;
-                barChart.data.datasets[0].data = inboundSeries;
-                barChart.data.datasets[1].data = outboundSeries;
-                barChart.update();
-            } else {
-                barChart = new Chart(document.getElementById('barChart').getContext('2d'), {
-                    type: 'bar',
-                    data: { labels: weekLabels, datasets: [
-                        { label: 'Inbound', data: inboundSeries, backgroundColor: 'rgba(212,5,17,0.9)', borderRadius: 10, maxBarThickness: 28 },
-                        { label: 'Outbound', data: outboundSeries, backgroundColor: 'rgba(59,130,246,0.9)', borderRadius: 10, maxBarThickness: 28 }
-                    ] },
-                    options: { ...chartOptions, interaction: { mode: 'index', intersect: false } }
-                });
-            }
-            if (lineChart) {
-                lineChart.data.labels = dailyLabels;
-                lineChart.data.datasets[0].data = dailyInbound;
-                lineChart.data.datasets[1].data = dailyOutbound;
-                lineChart.update();
-            } else {
-                lineChart = new Chart(document.getElementById('lineChart').getContext('2d'), {
-                    type: 'line',
-                    data: { labels: dailyLabels, datasets: [
-                        { label: 'Inbound', data: dailyInbound, borderColor: '#D40511', backgroundColor: 'rgba(212,5,17,0.28)', fill: true, tension: 0.3, pointRadius: 4, pointBackgroundColor: '#D40511' },
-                        { label: 'Outbound', data: dailyOutbound, borderColor: '#3B82F6', backgroundColor: 'rgba(59,130,246,0.22)', fill: true, tension: 0.3, pointRadius: 4, pointBackgroundColor: '#3B82F6' }
-                    ] },
-                    options: { ...chartOptions, interaction: { mode: 'index', intersect: false } }
-                });
-            }
-            if (donutChart) {
-                donutChart.data.labels = statusKeys;
-                donutChart.data.datasets[0].data = statusCounts;
-                donutChart.update();
-            } else {
-                donutChart = new Chart(document.getElementById('donutChart').getContext('2d'), {
-                    type: 'doughnut',
-                    data: { labels: statusKeys, datasets: [{ data: statusCounts, backgroundColor: statusKeys.map(key => statusColors[key]), borderColor: '#0D0D0D', borderWidth: 2 }] },
-                    options: {
-                        ...chartOptions,
-                        plugins: { ...chartOptions.plugins, legend: { display: true, position: 'bottom', labels: { color: '#F0F0F0' } } },
-                        onClick: (event, elements) => {
-                            if (!elements.length) return;
-                            const idx = elements[0].index;
-                            state.statuses = new Set([statusKeys[idx]]);
-                            state.page.inbound = 1;
-                            state.page.outbound = 1;
-                            render();
-                        }
-                    }
-                });
-            }
-        };
-
-        const renderTable = (data, tableId, type) => {
-            const tbody = document.querySelector(`#${tableId} tbody`);
-            const { field, asc } = state.sort[type];
-            const sorted = sortData(data, field, asc);
-            const page = state.page[type];
-            const totalPages = Math.max(1, Math.ceil(sorted.length / rowsPerPage));
-            const rows = sorted.slice((page - 1) * rowsPerPage, page * rowsPerPage);
-            tbody.innerHTML = rows.length ? rows.map(row => `
-                <tr data-row='${JSON.stringify(row).replace(/'/g, "\\'")}'>
-                    <td>${row.data}</td>
-                    <td>${createBadge(row.status).outerHTML}</td>
-                    <td>${row.tipo}</td>
-                    <td>${row.destino}</td>
-                    <td>${row.transportadora}</td>
-                    <td>${row.tons.toFixed(2)}</td>
-                </tr>
-            `).join('') : '<tr class="no-results"><td colspan="6">Nenhum registro encontrado</td></tr>';
-            const pagination = document.getElementById(`pagination${type.charAt(0).toUpperCase() + type.slice(1)}`);
-            pagination.innerHTML = `
-                <button ${page === 1 ? 'disabled' : ''} data-action="prev">Anterior</button>
-                <span>${page} / ${totalPages}</span>
-                <button ${page === totalPages ? 'disabled' : ''} data-action="next">Próximo</button>
-            `;
-            pagination.querySelectorAll('button').forEach(button => {
-                button.addEventListener('click', () => {
-                    if (button.dataset.action === 'prev' && page > 1) state.page[type] -= 1;
-                    if (button.dataset.action === 'next' && page < totalPages) state.page[type] += 1;
+                onClick:function(_,els) {
+                    if (!els.length) return;
+                    S.statuses = new Set([sKeys[els[0].index]]);
+                    S.page.ib = S.page.ob = 1;
                     render();
-                });
-            });
-        };
-
-        const renderTables = () => {
-            renderTable(filterData(inboundData), 'tableInbound', 'inbound');
-            renderTable(filterData(outboundData), 'tableOutbound', 'outbound');
-            document.querySelectorAll('th').forEach(th => {
-                const type = th.closest('table').id === 'tableInbound' ? 'inbound' : 'outbound';
-                const indicator = th.querySelector('.sort-indicator');
-                indicator.textContent = state.sort[type].field === th.dataset.field ? (state.sort[type].asc ? '▲' : '▼') : '';
-            });
-            attachRowEvents();
-        };
-
-        const renderFooter = () => {
-            const container = document.getElementById('carrierSummary');
-            const totals = {};
-            filterData(getAllData()).forEach(row => {
-                if (!totals[row.transportadora]) totals[row.transportadora] = { tons: 0, count: 0 };
-                totals[row.transportadora].tons += row.tons;
-                totals[row.transportadora].count += 1;
-            });
-            container.innerHTML = Object.entries(totals).sort((a, b) => b[1].tons - a[1].tons).map(([name, meta]) => `
-                <div class="summary-row"><span>${name}</span><span>${meta.count} registros</span><span>${meta.tons.toFixed(2)} TONS</span></div>`).join('') || '<p style="color:var(--text-muted);">Nenhum registro disponível.</p>';
-            document.getElementById('statusLegend').innerHTML = statusKeys.map(status => `
-                <span class="legend-item"><span class="legend-dot" style="background:${statusColors[status]}"></span>${status}</span>`).join('');
-        };
-
-        const initializeSort = tableId => {
-            document.querySelectorAll(`#${tableId} th`).forEach(th => {
-                th.addEventListener('click', () => {
-                    const type = tableId === 'tableInbound' ? 'inbound' : 'outbound';
-                    const field = th.dataset.field;
-                    if (state.sort[type].field === field) state.sort[type].asc = !state.sort[type].asc;
-                    else { state.sort[type].field = field; state.sort[type].asc = true; }
-                    state.page[type] = 1;
-                    renderTables();
-                });
-            });
-        };
-
-        const attachRowEvents = () => {
-            document.querySelectorAll('tbody tr[data-row]').forEach(row => {
-                row.addEventListener('click', () => {
-                    const record = JSON.parse(row.dataset.row);
-                    openDrawer(record);
-                });
-            });
-        };
-
-        const openDrawer = record => {
-            const drawer = document.getElementById('drawerPanel');
-            drawer.classList.add('open');
-            drawer.setAttribute('aria-hidden', 'false');
-            document.getElementById('detailDate').textContent = record.data;
-            document.getElementById('detailStatus').textContent = record.status;
-            document.getElementById('detailType').textContent = record.tipo;
-            document.getElementById('detailDestination').textContent = record.destino;
-            document.getElementById('detailCarrier').textContent = record.transportadora;
-            document.getElementById('detailTons').textContent = `${record.tons.toFixed(2)} TONS`;
-            document.getElementById('drawerSubtitle').textContent = `Transportadora: ${record.transportadora}`;
-            const history = getAllData().filter(row => row.transportadora === record.transportadora).sort((a, b) => parseDDMMYYYY(a.data) - parseDDMMYYYY(b.data));
-            const labels = history.map(row => row.data);
-            const values = history.map(row => row.tons);
-            if (drawerChart) {
-                drawerChart.data.labels = labels;
-                drawerChart.data.datasets[0].data = values;
-                drawerChart.update();
-            } else {
-                drawerChart = new Chart(document.getElementById('drawerChart').getContext('2d'), {
-                    type: 'line',
-                    data: { labels, datasets: [{ label: 'TONS', data: values, borderColor: '#FFCC00', backgroundColor: 'rgba(255,204,0,0.18)', fill: true, tension: 0.32, pointRadius: 3 }] },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { tooltip: { backgroundColor: '#0D0D0D', borderColor: '#FFCC00', borderWidth: 1, titleColor: '#fff', bodyColor: '#F0F0F0' }, legend: { display: false } },
-                        scales: { x: { ticks: { color: '#B8B8B8' }, grid: { color: 'rgba(255,255,255,0.06)' } }, y: { ticks: { color: '#B8B8B8' }, grid: { color: 'rgba(255,255,255,0.06)' } } }
-                    }
-                });
+                }
             }
-        };
-
-        const closeDrawer = () => {
-            const drawer = document.getElementById('drawerPanel');
-            drawer.classList.remove('open');
-            drawer.setAttribute('aria-hidden', 'true');
-        };
-
-        const exportCsv = () => {
-            const rows = ['Data,Status,Tipo,Destino,Transportadora,TONS'];
-            filterData(getAllData()).forEach(row => rows.push(`"${row.data}","${row.status}","${row.tipo}","${row.destino}","${row.transportadora}","${row.tons.toFixed(2)}"`));
-            const blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = `dhl_dashboard_${new Date().toISOString().slice(0,10)}.csv`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        };
-
-        const clearFilters = () => {
-            const active = state.dateStart || state.dateEnd || state.transportadora || state.destino || state.statuses.size !== statusKeys.length;
-            const btn = document.getElementById('btnClear');
-            if (!active) {
-                btn.classList.add('shake');
-                setTimeout(() => btn.classList.remove('shake'), 360);
-                return;
-            }
-            state.dateStart = '';
-            state.dateEnd = '';
-            state.transportadora = '';
-            state.destino = '';
-            state.statuses = new Set(statusKeys);
-            state.page.inbound = 1;
-            state.page.outbound = 1;
-            document.getElementById('dateStart').value = '';
-            document.getElementById('dateEnd').value = '';
-            document.getElementById('transportFilter').value = '';
-            document.getElementById('destinoFilter').value = '';
-            render();
-        };
-
-        const debounce = (fn, delay) => {
-            let timer;
-            return (...args) => { clearTimeout(timer); timer = setTimeout(() => fn(...args), delay); };
-        };
-
-        const bindEvents = () => {
-            document.getElementById('btnExport').addEventListener('click', exportCsv);
-            document.getElementById('btnClear').addEventListener('click', clearFilters);
-            document.getElementById('closeDrawer').addEventListener('click', closeDrawer);
-            document.getElementById('statusToggle').addEventListener('click', toggleStatusDropdown);
-            document.addEventListener('click', event => {
-                if (!event.target.closest('.status-group')) closeStatusDropdown();
-            });
-            document.getElementById('dateStart').addEventListener('change', event => { state.dateStart = event.target.value; state.page.inbound = 1; state.page.outbound = 1; render(); });
-            document.getElementById('dateEnd').addEventListener('change', event => { state.dateEnd = event.target.value; state.page.inbound = 1; state.page.outbound = 1; render(); });
-            document.getElementById('transportFilter').addEventListener('change', event => { state.transportadora = event.target.value; state.page.inbound = 1; state.page.outbound = 1; render(); });
-            document.getElementById('destinoFilter').addEventListener('input', debounce(event => { state.destino = event.target.value; state.page.inbound = 1; state.page.outbound = 1; render(); }, 300));
-        };
-
-        const render = () => {
-            saveState();
-            renderStatusButtons();
-            renderTransportFilter();
-            updateTimestamp();
-            renderKpis();
-            renderCharts();
-            renderTables();
-            renderFooter();
-        };
-
-        document.addEventListener('DOMContentLoaded', () => {
-            loadState();
-            document.getElementById('dateStart').value = state.dateStart;
-            document.getElementById('dateEnd').value = state.dateEnd;
-            document.getElementById('destinoFilter').value = state.destino;
-            bindEvents();
-            initializeSort('tableInbound');
-            initializeSort('tableOutbound');
-            render();
         });
-    </script>
+    }
+}
+
+// ── FOOTER ──────────────────────────────────────────────
+function renderFooter() {
+    var tot = {};
+    filtered().forEach(function(r) {
+        var k = r.transp || '?';
+        if (!tot[k]) tot[k] = {t:0,n:0};
+        tot[k].t += +r.tons||0;
+        tot[k].n++;
+    });
+    var carr = document.getElementById('ftCarrier');
+    carr.innerHTML = '';
+    Object.keys(tot).sort(function(a,b){return tot[b].t-tot[a].t;}).forEach(function(n) {
+        var d = document.createElement('div');
+        d.className = 'sumrow';
+        d.innerHTML = '<span>'+n+'</span><span>'+tot[n].n+' registros</span><span>'+tot[n].t.toFixed(2)+' TONS</span>';
+        carr.appendChild(d);
+    });
+    var leg = document.getElementById('ftLegend');
+    leg.innerHTML = '';
+    allStatuses().forEach(function(s) {
+        var el = document.createElement('span');
+        el.className = 'legitem';
+        el.innerHTML = '<span class="legdot" style="background:'+col(s)+'"></span>'+s;
+        leg.appendChild(el);
+    });
+}
+
+// ── DRAWER ──────────────────────────────────────────────
+function openDrawer(r) {
+    document.getElementById('drawer').classList.add('open');
+    document.getElementById('drDate').textContent   = r.data||'-';
+    document.getElementById('drStatus').innerHTML   = mkBadge(r.status).outerHTML;
+    document.getElementById('drPri').innerHTML      = mkPri(r.status).outerHTML;
+    document.getElementById('drType').textContent   = r.tipo||'-';
+    document.getElementById('drDest').textContent   = r.destino||'-';
+    document.getElementById('drTransp').textContent = r.transp||'-';
+    document.getElementById('drTons').textContent   = (+r.tons||0).toFixed(2)+' TONS';
+    document.getElementById('drSub').textContent    = 'Transportadora: '+r.transp;
+
+    var hist = DATA.filter(function(x){return x.transp===r.transp;})
+                   .sort(function(a,b){return parseDate(a.data)-parseDate(b.data);});
+    var labels = hist.map(function(x){return x.data;});
+    var vals   = hist.map(function(x){return +x.tons||0;});
+
+    if (drCh) {
+        drCh.data.labels = labels;
+        drCh.data.datasets[0].data = vals;
+        drCh.update();
+    } else {
+        drCh = new Chart(document.getElementById('drChart'), {
+            type:'line',
+            data:{labels:labels,datasets:[{label:'TONS',data:vals,borderColor:'#FFCC00',backgroundColor:'rgba(255,204,0,.15)',fill:true,tension:.3,pointRadius:3}]},
+            options:{
+                responsive:true,maintainAspectRatio:false,
+                plugins:{legend:{display:false},tooltip:{backgroundColor:'#111',borderColor:'#FFCC00',borderWidth:1,titleColor:'#fff',bodyColor:'#eee',padding:10}},
+                scales:{x:{ticks:{color:'#555'},grid:{color:'rgba(255,255,255,.04)'}},y:{ticks:{color:'#555'},grid:{color:'rgba(255,255,255,.04)'}}}
+            }
+        });
+    }
+}
+function closeDrawer() {
+    document.getElementById('drawer').classList.remove('open');
+}
+
+// ── EXPORT ──────────────────────────────────────────────
+function exportCSV() {
+    var rows = ['Data,Status,Prioridade,Tipo,Destino,Transportadora,TONS'];
+    filtered().forEach(function(r) {
+        rows.push('"'+r.data+'","'+r.status+'","'+PLBL[pri(r.status)]+'","'+r.tipo+'","'+r.destino+'","'+r.transp+'","'+(+r.tons||0).toFixed(2)+'"');
+    });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([rows.join('\n')],{type:'text/csv;charset=utf-8;'}));
+    a.download = 'dhl_'+new Date().toISOString().slice(0,10)+'.csv';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+// ── CLEAR ───────────────────────────────────────────────
+function clearFilters() {
+    var any = S.dateStart||S.dateEnd||S.transp||S.destino||S.statuses.size;
+    if (!any) { document.getElementById('btnClear').classList.add('shake'); setTimeout(function(){document.getElementById('btnClear').classList.remove('shake');},350); return; }
+    S.dateStart=S.dateEnd=S.transp=S.destino='';
+    S.statuses.clear(); S.page.ib=S.page.ob=1;
+    document.getElementById('dateStart').value='';
+    document.getElementById('dateEnd').value='';
+    document.getElementById('selTransp').value='';
+    document.getElementById('inpDestino').value='';
+    render();
+}
+
+// ── INIT SORT ────────────────────────────────────────────
+function initSort(tableId, panel) {
+    document.querySelectorAll('#'+tableId+' th').forEach(function(th) {
+        th.addEventListener('click', function() {
+            var f = th.dataset.f;
+            if (S.sort[panel].f===f) S.sort[panel].asc = !S.sort[panel].asc;
+            else { S.sort[panel].f=f; S.sort[panel].asc=true; }
+            S.page[panel]=1;
+            renderTables();
+        });
+    });
+}
+
+// ── RENDER ──────────────────────────────────────────────
+function render() {
+    document.getElementById('ts').textContent = new Date().toLocaleString('pt-BR',{hour12:false});
+    renderStatusDD();
+    renderTranspSel();
+    renderKpis();
+    renderCharts();
+    renderTables();
+    renderFooter();
+}
+
+// ── NORMALIZE API DATA ───────────────────────────────────
+function normalize(raw) {
+    return raw.map(function(r) {
+        return {
+            data:   r.data_operacao   || r.data   || '',
+            status: r.status_carregamento || r.status || '',
+            tipo:   r.tipo_de_carga   || r.tipo   || '',
+            destino:r.destino         || '',
+            transp: r.transportadora  || r.transp  || '',
+            tons:   +(r.tons||0)
+        };
+    });
+}
+
+// ── BOOT ────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function() {
+
+    // events
+    document.getElementById('btnExport').addEventListener('click', exportCSV);
+    document.getElementById('btnClear').addEventListener('click', clearFilters);
+    document.getElementById('btnCloseDrawer').addEventListener('click', closeDrawer);
+
+    document.getElementById('statusToggle').addEventListener('click', function() {
+        document.getElementById('statusDD').classList.toggle('hidden');
+    });
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.status-wrap')) document.getElementById('statusDD').classList.add('hidden');
+    });
+
+    document.getElementById('dateStart').addEventListener('change', function(e) { S.dateStart=e.target.value; S.page.ib=S.page.ob=1; render(); });
+    document.getElementById('dateEnd').addEventListener('change',   function(e) { S.dateEnd=e.target.value;   S.page.ib=S.page.ob=1; render(); });
+    document.getElementById('selTransp').addEventListener('change', function(e) { S.transp=e.target.value;    S.page.ib=S.page.ob=1; render(); });
+    document.getElementById('inpDestino').addEventListener('input',  debounce(function(e){ S.destino=e.target.value; S.page.ib=S.page.ob=1; render(); }, 300));
+
+    document.querySelectorAll('.ptab').forEach(function(tab) {
+        tab.addEventListener('click', function() { switchTab(tab.dataset.p, tab.dataset.v); });
+    });
+
+    initSort('tIb','ib');
+    initSort('tOb','ob');
+
+    // load data
+    var onServer = window.location.protocol === 'http:' && window.location.hostname !== '';
+
+    function loadData() {
+        if (onServer) {
+            fetch('/status')
+                .then(function(r){ return r.ok ? r.json() : Promise.reject(); })
+                .then(function(raw){ DATA = normalize(raw); render(); })
+                .catch(function(){ DATA = SAMPLE; render(); });
+        } else {
+            DATA = SAMPLE;
+            render();
+        }
+    }
+
+    loadData();
+
+    // Auto-refresh a cada 30 segundos (modo TV)
+    setInterval(loadData, 30000);
+});
+</script>
 </body>
 </html>
