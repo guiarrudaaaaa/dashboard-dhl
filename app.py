@@ -9,14 +9,14 @@ app.secret_key = os.environ.get("SECRET_KEY", "dhl-dashboard-2026")
 # ── CONFIGURAÇÕES ────────────────────────────────────────
 ADMIN_USER = os.environ.get("ADMIN_USER", "admin")
 ADMIN_PASS = os.environ.get("ADMIN_PASS", "dhl2026")
-DB_PATH    = os.environ.get("DB_PATH", "/data/dashboard.db")
+DB_PATH    = os.environ.get("DB_PATH", os.path.join(os.path.dirname(os.path.abspath(__file__)), "dashboard.db"))
 
 STATUSES = ["Pátio", "Doca", "Separado", "Separando", "Liberado", "Trânsito", "Descarregado", "Carregando"]
 TIPOS    = ["Entrada", "Saída"]
 
 # ── BANCO DE DADOS ───────────────────────────────────────
 def get_db():
-    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
+
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
